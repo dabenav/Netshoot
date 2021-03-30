@@ -18,7 +18,7 @@ $Getway = $IPDetails.IPv4DefaultGateway.NextHop
 $DNSs = (Get-DnsClientServerAddress).ServerAddresses|where{$_.length -eq '12'}
 $PublicDNS = "8.8.8.8", "1.1.1.1" #,"4.4.4.4"
 $PublicSites = "www.google.com", "www.twitter.com"
-$domain = $env:USERDNSDOMAIN
+$domain = (Get-WmiObject win32_computersystem).Domain
 
 
 # Test Getway Ping
