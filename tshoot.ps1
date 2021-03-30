@@ -22,10 +22,10 @@ $PublicSites = "www.google.com", "www.twitter.com"
 $domain = (Get-WmiObject win32_computersystem).Domain
 
 
-# Test Getway Ping
+# Test Geteway Ping
 
 $pingCount = 5
-$con = Test-Connection $Getway -count $pingCount -ErrorAction SilentlyContinue
+$con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
 $average = ($con.ResponseTime | Measure-Object -Average).Average
 $lost = $pingCount-($con.count)
 
@@ -33,14 +33,14 @@ $data = New-Object -TypeName psobject
 
 if ($lost -eq 0 )
 {
-    $GetwayPingStatus = "Excelent"   
-    $data | Add-Member -MemberType NoteProperty -Name GetwayPing -Value $GetwayPingStatus -Force
+    $GetewayPingStatus = "Excelent"   
+    $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
     Write-Host "`nGateway ping status collected and responsetime is $average ms" -ForegroundColor Gray
 }
 elseIf($lost -lt 5 -and $lost -gt 0)
 {
-    $GetwayPingStatus = "Poor"    
-    $data | Add-Member -MemberType NoteProperty -Name GetwayPing -Value $GetwayPingStatus -Force
+    $GetewayPingStatus = "Poor"    
+    $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
     Write-Host "Gateway ping status collected and responsetime is $average ms" -ForegroundColor Gray  
 }
 else
