@@ -34,7 +34,7 @@ if ($lost -eq 0 )
 {
     $GetwayPingStatus = "Excelent"   
     $data | Add-Member -MemberType NoteProperty -Name GetwayPing -Value $GetwayPingStatus -Force
-    Write-Host "Gateway ping status collected and responsetime is $average ms" -ForegroundColor Gray
+    Write-Host "`nGateway ping status collected and responsetime is $average ms" -ForegroundColor Gray
 }
 elseIf($lost -lt 5 -and $lost -gt 0)
 {
