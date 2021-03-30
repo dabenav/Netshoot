@@ -15,9 +15,9 @@ $result = @()
 
 $counter = 1
 $IP = $IPDetails.IPv4Address.IPAddress
-$Getway = $IPDetails.IPv4DefaultGateway.NextHop
+$Geteway = $IPDetails.IPv4DefaultGateway.NextHop
 $DNSs = (Get-DnsClientServerAddress).ServerAddresses|where{$_.length -eq '12'}
-$PublicDNS = "8.8.8.8", "1.1.1.1" #,"4.4.4.4"
+$PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "www.google.com", "www.twitter.com"
 $domain = (Get-WmiObject win32_computersystem).Domain
 
