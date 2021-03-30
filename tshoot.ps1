@@ -1,9 +1,6 @@
 ﻿####################################################################################################################
 #  Nmae: NetworkTroubleshooting.ps1
 #  Task : To check network connectivity from local system to outside and Internal
-#  Support : Sachin (devinfotech80@gmail.com)
-#
-#
 ##################################################################################################################33
 
 Write-Host "Starting Network Connectivity test....." -ForegroundColor Gray
