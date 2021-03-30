@@ -181,7 +181,7 @@ foreach ($tsite in $PublicSites)
 # getting output
  $result += $data
 
- Write-Host "============ RESULTS ============" -ForegroundColor Green
+ Write-Host "`n============ RESULTS ============" -ForegroundColor Green
 
  $result
  Write-Host "Completed Network Connectivity test, above report will help you to understand network issues......" -ForegroundColor Green
