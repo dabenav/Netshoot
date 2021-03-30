@@ -1,7 +1,7 @@
-﻿####################################################################################################################
+####################################################################################################################
 #  Nmae: NetworkTroubleshooting.ps1
 #  Task : To check network connectivity from local system to outside and Internal
-##################################################################################################################33
+####################################################################################################################
 
 Write-Host "Starting Network Connectivity test....." -ForegroundColor Gray
 
@@ -20,7 +20,9 @@ $PublicDNS = "8.8.8.8", "1.1.1.1" #,"4.4.4.4"
 $PublicSites = "www.google.com", "www.twitter.com"
 $domain = $env:USERDNSDOMAIN
 
+
 # Test Getway Ping
+
 $pingCount = 5
 $con = Test-Connection $Getway -count $pingCount -ErrorAction SilentlyContinue
 $average = ($con.ResponseTime | Measure-Object -Average).Average
@@ -48,7 +50,8 @@ else
 }
 
 
-#Test DNS Connectivity
+# Test DNS Connectivity
+
 foreach ($DNS in $DNSs)
 {
     $DNSPingBlnk = @()
@@ -78,7 +81,8 @@ foreach ($DNS in $DNSs)
 }
 
 
-#Local Domain Joined Status
+# Local Domain Joined Status
+
 if ($domain)
 {  
   $domainPing = Test-Connection $domain -count $pingCount -ErrorAction SilentlyContinue
@@ -102,6 +106,7 @@ else
 }
 
 # Public DNS Status
+
 foreach ($PDNS in $PublicDNS)
 {
     $PDNSPingBlnk = @()
@@ -129,7 +134,9 @@ foreach ($PDNS in $PublicDNS)
     }
       
 }
-#DNS REsolution for public sites
+
+# DNS REsolution for public sites
+
 $PublicSites1 = "google.com", "twitter.com"
 
 foreach ($item in $PublicSites1)
@@ -148,7 +155,7 @@ foreach ($item in $PublicSites1)
       
  }
  
-#Telnet Test to public Sites on port 80 and 443
+# Telnet Test to public Sites on port 80 and 443
 
 foreach ($tsite in $PublicSites)
 {
@@ -171,12 +178,12 @@ foreach ($tsite in $PublicSites)
    }
 }
 
-#getting output
+# getting output
  $result += $data
 
- Write-Host "RESULT IS AS BELOW..... " -ForegroundColor Green
+ Write-Host "============ RESULTS ============" -ForegroundColor Green
 
  $result
  Write-Host "Completed Network Connectivity test, above report will help you to understand network issues......" -ForegroundColor Green
 
-#########################################################################################################################################3
+##########################################################################################################################################
