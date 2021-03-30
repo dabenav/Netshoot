@@ -11,7 +11,8 @@ $data = $null
 $IPDetails = Get-NetIPConfiguration | where{$_.NetAdapter.Status -eq 'UP'}
 $result = @()
 
-#Setting up standard variable for output as required
+# Setting up standard variable for output as required
+
 $counter = 1
 $IP = $IPDetails.IPv4Address.IPAddress
 $Getway = $IPDetails.IPv4DefaultGateway.NextHop
@@ -179,6 +180,7 @@ foreach ($tsite in $PublicSites)
 }
 
 # getting output
+
  $result += $data
 
  Write-Host "`n============ RESULTS ============" -ForegroundColor Green
