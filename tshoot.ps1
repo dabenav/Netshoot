@@ -45,8 +45,8 @@ elseIf($lost -lt 5 -and $lost -gt 0)
 }
 else
 {
-    $GetwayPingStatus = "Fail"
-    $data | Add-Member -MemberType NoteProperty -Name GetwayPing -Value $GetwayPingStatus -Force
+    $GetewayPingStatus = "Fail"
+    $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
     Write-Host "Gateway ping status collected and responsetime is $average ms" -ForegroundColor Gray    
 }
 
