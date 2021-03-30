@@ -3,7 +3,7 @@
 #  Task : To check network connectivity from local system to outside and Internal
 ####################################################################################################################
 
-Write-Host "Starting Network Connectivity test....." -ForegroundColor Gray
+Write-Host "`nStarting Network Connectivity test....." -ForegroundColor Gray
 
 $result = $null
 $data = $null
