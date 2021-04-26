@@ -106,6 +106,7 @@ else
     Write-Host "System not added in domain" -ForegroundColor Gray
 }
 
+
 # Public DNS Status
 
 foreach ($PDNS in $PublicDNS)
@@ -136,6 +137,7 @@ foreach ($PDNS in $PublicDNS)
       
 }
 
+
 # DNS REsolution for public sites
 
 $PublicSites1 = "google.com", "twitter.com"
@@ -155,6 +157,7 @@ foreach ($item in $PublicSites1)
    }
       
  }
+ 
  
 # Telnet Test to public Sites on port 80 and 443
 
@@ -178,6 +181,7 @@ foreach ($tsite in $PublicSites)
           
    }
 }
+
 
 # getting output
 
