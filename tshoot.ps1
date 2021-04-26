@@ -8,7 +8,7 @@ Write-Host "`nStarting Network Connectivity test....." -ForegroundColor Gray
 $result = $null
 $data = $null
 #Get IP Configuration details from Worksttion
-$IPDetails = Get-NetIPConfiguration | where{$_.NetAdapter.Status -eq 'UP'}
+$IPDetails = Get-NetIPConfiguration | where{ ($_.NetAdapter.Status -eq 'UP') -and ($_.IPv4DefaultGateway -ne $null) }
 $result = @()
 
 # Setting up standard variable for output as required
@@ -190,6 +190,6 @@ foreach ($tsite in $PublicSites)
  Write-Host "`n============ RESULTS ============" -ForegroundColor Green
 
  $result
- Write-Host "Completed Network Connectivity test, above report will help you to understand network issues......" -ForegroundColor Green
+ Write-Host "`nNetwork Connectivity test COMPLETED " -ForegroundColor Green
 
 ##########################################################################################################################################
