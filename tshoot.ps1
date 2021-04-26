@@ -84,7 +84,7 @@ foreach ($DNS in $DNSs)
 
 # Local Domain Joined Status
 
-if ($domain)
+if ($domain -ne "Workgroup")
 {  
   $domainPing = Test-Connection $domain -count $pingCount -ErrorAction SilentlyContinue
   $average2 = ($domainPing.ResponseTime | Measure-Object -Average).Average
