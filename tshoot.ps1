@@ -140,9 +140,9 @@ foreach ($PDNS in $PublicDNS)
 
 # DNS REsolution for public sites
 
-$PublicSites1 = "google.com", "twitter.com"
+$PublicSites1 = "bit.ly", "aa.com"
 
-foreach ($item in $PublicSites1)
+foreach ($item in $PublicSites)
 {
    $ItemIP = (Test-Connection $item -count 1 -ErrorAction SilentlyContinue).IPV4Address.IPAddressToString
    if ($ItemIP)
