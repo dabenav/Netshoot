@@ -1,6 +1,7 @@
 ####################################################################################################################
-#  Nmae: NetworkTroubleshooting.ps1
-#  Task : To check network connectivity from local system to outside and Internal
+#  Name: NetworkTroubleshooting.ps1
+#  Task: To check network connectivity from local system to outside and Internal
+#  Architech: Daniel Benavides
 ####################################################################################################################
 
 Write-Host "`nStarting Network Connectivity test....." -ForegroundColor Gray
@@ -140,7 +141,7 @@ foreach ($PDNS in $PublicDNS)
 
 # DNS REsolution for public sites
 
-$PublicSites1 = "bit.ly", "aa.com"
+# $PublicSites1 = "bit.ly", "aa.com"
 
 foreach ($item in $PublicSites)
 {
