@@ -18,7 +18,7 @@ $IP = $IPDetails.IPv4Address.IPAddress
 $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
 $DNSs = (Get-DnsClientServerAddress).ServerAddresses|where{$_.length -lt '16'}
 $PublicDNS = "8.8.8.8", "1.1.1.1"
-$PublicSites = "etsy.com", "aa.com"
+$PublicSites = "bit.ly", "aa.com"
 $domain = (Get-WmiObject win32_computersystem).Domain
 
 
