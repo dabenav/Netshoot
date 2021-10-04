@@ -36,19 +36,19 @@ if ($lost -eq 0 )
 {
     $GetewayPingStatus = "Excelent"   
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nGateway ping status collected and responsetime is $average ms" -ForegroundColor Gray
+    Write-Host "`nGateway ping status collected and response time is $average ms" -ForegroundColor Gray
 }
 elseIf($lost -lt 5 -and $lost -gt 0)
 {
     $GetewayPingStatus = "Poor"    
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Gateway ping status collected and responsetime is $average ms" -ForegroundColor Gray  
+    Write-Host "Gateway ping status collected and response time is $average ms" -ForegroundColor Gray  
 }
 else
 {
     $GetewayPingStatus = "Fail"
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Gateway ping status collected and responsetime is $average ms" -ForegroundColor Gray    
+    Write-Host "Gateway ping status collected and response time is $average ms" -ForegroundColor Gray    
 }
 
 
@@ -65,19 +65,19 @@ foreach ($DNS in $DNSs)
     {
         $DNSPingBlnk = "Excelent"        
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "DNS ping status collected and responsetime is $average1 ms" -ForegroundColor Gray
+        Write-Host "DNS ping status collected and response time is $average1 ms" -ForegroundColor Gray
     }
     elseIf($lost1 -lt 5 -and $lost1 -gt 0)
     {
         $DNSPingBlnk = "Poor"       
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "DNS ping status collected and responsetime is $average1 ms" -ForegroundColor Gray
+        Write-Host "DNS ping status collected and response time is $average1 ms" -ForegroundColor Gray
     }
     else
     {
         $DNSPingBlnk = "Fail"
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "DNS ping status collected and responsetime is $average1 ms" -ForegroundColor Gray
+        Write-Host "DNS ping status collected and response time is $average1 ms" -ForegroundColor Gray
     }
       
 }
