@@ -25,7 +25,7 @@ $domain = (Get-WmiObject win32_computersystem).Domain
 
 # Test Geteway Ping
 
-$pingCount = 5
+$pingCount = 10
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
 $average = ($con.ResponseTime | Measure-Object -Average).Average
 $lost = $pingCount-($con.count)
