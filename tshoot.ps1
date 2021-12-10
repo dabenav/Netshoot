@@ -20,14 +20,13 @@ $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
 $DNSs = (Get-DnsClientServerAddress).ServerAddresses|where{$_.length -lt '16'}
 $domain = (Get-WmiObject win32_computersystem).Domain
 
-######### Edit these variables as needed #########
+# Edit these variables as needed
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "ibm.com", "cisco.com"
-$pingCount = 10
+$pingCount = 3
 
-##################################################
-
+# Do not edit below this line
 # Local Domain Joined Status
 
 if ($domain -ne "Workgroup")
@@ -38,12 +37,12 @@ if ($domain -ne "Workgroup")
     if ($domainPing)
     {
         $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
-        Write-Host "DOMAIN ping status collected and responsetime is $average2 ms" -ForegroundColor Gray
+        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
     }
     else
     {
         $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
-        Write-Host "DOMAIN ping status collected and responsetime is $average2 ms" -ForegroundColor Gray
+        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
     }             
 }
 else
@@ -127,21 +126,21 @@ foreach ($PDNS in $PublicDNS)
     {
         $PDNSPingBlnk = "Excelent"        
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS DNS ping status collected and responsetime is $average3 ms" -ForegroundColor Gray
+        Write-Host "$PDNS DNS ping responsetime is $average3 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
     elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
     {
         $PDNSPingBlnk = "Poor"       
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS DNS ping status collected and responsetime is $average3 ms" -ForegroundColor Gray
+        Write-Host "$PDNS DNS ping responsetime is $average3 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
     else
     {
         $PDNSPingBlnk = "Fail"
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS DNS ping status collected and responsetime is $average3 ms" -ForegroundColor Gray
+        Write-Host "$PDNS DNS ping responsetime is $average3 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
       
