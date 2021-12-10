@@ -53,6 +53,7 @@ else
 }
 
 # Test Geteway Ping
+
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
 $average = ($con.ResponseTime | Measure-Object -Average).Average
 $lost = $pingCount-($con.count)
@@ -193,7 +194,6 @@ foreach ($tsite in $PublicSites)
  $result += $data
 
  Write-Host "`n============ RESULTS ============" -ForegroundColor Green
-
  $result
  Write-Host "`nNetwork Connectivity test COMPLETED " -ForegroundColor Green
 
