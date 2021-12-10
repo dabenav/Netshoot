@@ -20,13 +20,14 @@ $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
 $DNSs = (Get-DnsClientServerAddress).ServerAddresses|where{$_.length -lt '16'}
 $domain = (Get-WmiObject win32_computersystem).Domain
 
-# Edit these variables as needed
+############## Edit these variables as needed ###################
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "ibm.com", "cisco.com"
-$pingCount = 3
+$pingCount = 10
 
-# Do not edit below this line
+#################################################################
+
 # Local Domain Joined Status
 
 if ($domain -ne "Workgroup")
