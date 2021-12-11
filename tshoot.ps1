@@ -23,34 +23,10 @@ $domain = (Get-WmiObject win32_computersystem).Domain
 ############## Edit these variables as needed ###################
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
-$PublicSites = "ibm.com", "cisco.com"
+$PublicSites = "cisco.com", "ibm.com"
 $pingCount = 10
 
 #################################################################
-
-# Local Domain Joined Status
-
-if ($domain -ne "Workgroup")
-{  
-  $domainPing = Test-Connection $domain -count $pingCount -ErrorAction SilentlyContinue
-  $average2 = ($domainPing.ResponseTime | Measure-Object -Average).Average
-  $data | Add-Member -MemberType NoteProperty -Name "Domain" -Value $domain -Force
-    if ($domainPing)
-    {
-        $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
-        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
-    }
-    else
-    {
-        $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
-        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
-    }             
-}
-else
-{
-    $data | Add-Member -MemberType NoteProperty -Name "Domain" -Value "No Domain Name" -Force
-    Write-Host "System not added in domain`n" -ForegroundColor Gray
-}
 
 # Test Geteway Ping
 
@@ -113,6 +89,30 @@ foreach ($DNS in $DNSs)
         Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
       
+}
+
+# Local Domain Joined Status
+
+if ($domain -ne "Workgroup")
+{  
+  $domainPing = Test-Connection $domain -count $pingCount -ErrorAction SilentlyContinue
+  $average2 = ($domainPing.ResponseTime | Measure-Object -Average).Average
+  $data | Add-Member -MemberType NoteProperty -Name "Domain" -Value $domain -Force
+    if ($domainPing)
+    {
+        $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
+        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
+    }
+    else
+    {
+        $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
+        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
+    }             
+}
+else
+{
+    $data | Add-Member -MemberType NoteProperty -Name "Domain" -Value "No Domain Name" -Force
+    Write-Host "System not added in domain`n" -ForegroundColor Gray
 }
 
 # Public DNS Status
