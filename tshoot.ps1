@@ -40,21 +40,21 @@ if ($lost -eq 0 )
 {
     $GetewayPingStatus = "Excelent"   
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nGateway ping status collected and response time is $average ms" -ForegroundColor Gray
+    Write-Host "`nGateway ping response time is $average ms" -ForegroundColor Gray
     Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray
 }
 elseIf($lost -lt $pingCount -and $lost -gt 0)
 {
     $GetewayPingStatus = "Poor"    
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nGateway ping status collected and response time is $average ms" -ForegroundColor Gray
+    Write-Host "`nGateway ping response time is $average ms" -ForegroundColor Gray
     Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray
 }
 else
 {
     $GetewayPingStatus = "Fail"
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nGateway ping status collected and response time is $average ms" -ForegroundColor Gray  
+    Write-Host "`nGateway ping response time is $average ms" -ForegroundColor Gray  
     Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray  
 }
 
