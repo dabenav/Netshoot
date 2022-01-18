@@ -40,21 +40,21 @@ if ($lost -eq 0 )
 {
     $GetewayPingStatus = "Excelent"   
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nGateway ping response time is $average ms" -ForegroundColor Gray
+    Write-Host "`nGateway response time is $average ms" -ForegroundColor Gray
     Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray
 }
 elseIf($lost -lt $pingCount -and $lost -gt 0)
 {
     $GetewayPingStatus = "Poor"    
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nGateway ping response time is $average ms" -ForegroundColor Gray
+    Write-Host "`nGateway response time is $average ms" -ForegroundColor Gray
     Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray
 }
 else
 {
     $GetewayPingStatus = "Fail"
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nGateway ping response time is $average ms" -ForegroundColor Gray  
+    Write-Host "`nGateway response time is $average ms" -ForegroundColor Gray  
     Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray  
 }
 
@@ -71,21 +71,21 @@ foreach ($DNS in $DNSs)
     {
         $DNSPingBlnk = "Excelent"        
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "DNS ping status collected and response time is $average1 ms" -ForegroundColor Gray
+        Write-Host "DNS response time is $average1 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor Gray  
     }
     elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
     {
         $DNSPingBlnk = "Poor"       
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "DNS ping status collected and response time is $average1 ms" -ForegroundColor Gray
+        Write-Host "DNS response time is $average1 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
     else
     {
         $DNSPingBlnk = "Fail"
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "DNS ping status collected and response time is $average1 ms" -ForegroundColor Gray
+        Write-Host "DNS response time is $average1 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
       
@@ -101,18 +101,18 @@ if ($domain -ne "Workgroup")
     if ($domainPing)
     {
         $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
-        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
+        Write-Host "Domain response time is $average2 ms" -ForegroundColor Gray
     }
     else
     {
         $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
-        Write-Host "DOMAIN ping responsetime is $average2 ms" -ForegroundColor Gray
+        Write-Host "Domain response time is $average2 ms" -ForegroundColor Gray
     }             
 }
 else
 {
     $data | Add-Member -MemberType NoteProperty -Name "Domain" -Value "No Domain Name" -Force
-    Write-Host "System not added in domain`n" -ForegroundColor Gray
+    Write-Host "The system is not joined to a domain`n" -ForegroundColor Gray
 }
 
 # Public DNS Status
@@ -128,21 +128,21 @@ foreach ($PDNS in $PublicDNS)
     {
         $PDNSPingBlnk = "Excelent"        
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS DNS ping responsetime is $average3 ms" -ForegroundColor Gray
+        Write-Host "$PDNS DNS response time is $average3 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
     elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
     {
         $PDNSPingBlnk = "Poor"       
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS DNS ping responsetime is $average3 ms" -ForegroundColor Gray
+        Write-Host "$PDNS DNS response time is $average3 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
     else
     {
         $PDNSPingBlnk = "Fail"
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS DNS ping responsetime is $average3 ms" -ForegroundColor Gray
+        Write-Host "$PDNS DNS response time is $average3 ms" -ForegroundColor Gray
         Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
     }
       
@@ -156,12 +156,12 @@ foreach ($item in $PublicSites)
    if ($ItemIP)
    {
       $data | Add-Member -MemberType NoteProperty -Name "DNS Resolve $item" -Value "Success" -Force
-      Write-Host "DNS Resolve Information collected for $item" -ForegroundColor Gray
+      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor Gray
    }
    else
    {
       $data | Add-Member -MemberType NoteProperty -Name  $data  -Value "Failed" -Force
-      Write-Host "DNS Resolve Information collected for $item" -ForegroundColor Gray
+      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor Gray
    }
       
  }
