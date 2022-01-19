@@ -17,7 +17,7 @@ $result = @()
 $counter = 1
 $IP = $IPDetails.IPv4Address.IPAddress
 $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
-$DNSs = (Get-DnsClientServerAddress).ServerAddresses|where{$_.length -lt '16'}
+$DNSs = Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object -ExpandProperty ServerAddresses
 $domain = (Get-WmiObject win32_computersystem).Domain
 
 ############## Edit these variables as needed ###################
@@ -193,8 +193,8 @@ foreach ($tsite in $PublicSites)
 
  $result += $data
 
- Write-Host "`n============ RESULTS ============" -ForegroundColor Green
+ Write-Host "`n================ RESULTS ================" -ForegroundColor Green
  $result
- Write-Host "`nNetwork Connectivity test COMPLETED " -ForegroundColor Green
+ Write-Host "`n== NETWORK CONNECTIVITY TEST COMPLETED ==" -ForegroundColor Green
 
 ##########################################################################################################################################
