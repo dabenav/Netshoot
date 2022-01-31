@@ -34,7 +34,7 @@ $data = New-Object -TypeName psobject
 
 ############## Get Interface Name Information ###################
 
-$data | Add-Member -MemberType NoteProperty -Name Interface -Value $IPDetails.NetAdapter.Name
+$data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
 
 ##################### Geteway Ping Test #########################
 
@@ -198,7 +198,7 @@ foreach ($tsite in $PublicSites)
 
 ####################### Get Public IP Address  ########################
 
-$data | Add-Member -MemberType NoteProperty -Name PublicIPAddress -Value $PublicIPAddress
+$data | Add-Member -MemberType NoteProperty -Name "Public IP Address" -Value $PublicIPAddress
 
 ########################### getting output ############################
 
