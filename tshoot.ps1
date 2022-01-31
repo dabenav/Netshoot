@@ -17,8 +17,10 @@ $result = @()
 $counter = 1
 $IP = $IPDetails.IPv4Address.IPAddress
 $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
-$DNSs = Get-DnsClientServerAddress -AddressFamily IPv4 | Select-Object -ExpandProperty ServerAddresses
+$DNSServers = $IPDetails.DNSServer | Where-Object {$_.AddressFamily -eq '2'}
+$DNSs = $DNSServers.ServerAddresses
 $domain = (Get-WmiObject win32_computersystem).Domain
+$PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.220).IPAddress
 
 ############## Edit these variables as needed ###################
 
@@ -28,13 +30,18 @@ $pingCount = 10
 
 #################################################################
 
-# Test Geteway Ping
+$data = New-Object -TypeName psobject
+
+############## Get Interface Name Information ###################
+
+$data | Add-Member -MemberType NoteProperty -Name Interface -Value $IPDetails.NetAdapter.Name
+
+##################### Geteway Ping Test #########################
 
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
 $average = ($con.ResponseTime | Measure-Object -Average).Average
 $lost = $pingCount-($con.count)
 
-$data = New-Object -TypeName psobject
 
 if ($lost -eq 0 )
 {
@@ -189,7 +196,11 @@ foreach ($tsite in $PublicSites)
    }
 }
 
-# getting output
+####################### Get Public IP Address  ########################
+
+$data | Add-Member -MemberType NoteProperty -Name PublicIPAddress -Value $PublicIPAddress
+
+########################### getting output ############################
 
  $result += $data
 
