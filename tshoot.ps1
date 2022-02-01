@@ -26,7 +26,7 @@ $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "cisco.com", "ibm.com"
-$pingCount = 10
+$pingCount = 2
 
 #################################################################
 
@@ -196,16 +196,46 @@ foreach ($tsite in $PublicSites)
    }
 }
 
+
 ####################### Get Public IP Address  ########################
 
 $data | Add-Member -MemberType NoteProperty -Name "Public IP Address" -Value $PublicIPAddress
 
+
+
 ########################### getting output ############################
 
- $result += $data
+$result += $data
 
- Write-Host "`n================ RESULTS ================" -ForegroundColor Green
- $result
- Write-Host "`n== NETWORK CONNECTIVITY TEST COMPLETED ==" -ForegroundColor Green
+Write-Host "`n================ RESULTS ================" -ForegroundColor Green
+
+$result
+
+
+####################### Speed Test  ########################
+
+Write-Host "`nRunning Speed Test..." -ForegroundColor Gray
+
+$Speedtesturi = Invoke-WebRequest -Uri "https://www.speedtest.net/apps/cli" -UseBasicParsing
+$downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download for Windows*"}
+Invoke-WebRequest -Uri $downloaduri.href -OutFile ".\speedtest.zip" 
+Expand-Archive -Path ".\speedtest.zip" -DestinationPath ".\" -Force
+
+$speedtestresult = &".\speedtest.exe" --accept-license --format=json | ConvertFrom-Json 
+
+$speedtestdata = New-Object psobject
+
+$speedtestdata | Add-Member -MemberType NoteProperty -Name ISP -Value $speedtestresult.isp
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value ([math]::Round($speedtestresult.download.bandwidth / 1000000 * 8, 2))
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value ([math]::Round($speedtestresult.upload.bandwidth / 1000000 * 8, 2))
+$speedtestdata | Add-Member -MemberType NoteProperty -Name Latency -Value ([math]::Round($speedtestresult.ping.latency, 2))
+$speedtestdata | Add-Member -MemberType NoteProperty -Name Jitter -Value ([math]::Round($speedtestresult.ping.jitter, 2))
+#$speedtestdata | Add-Member -MemberType NoteProperty -Name "Public IP" -Value $speedtestresult.interface.externalIp
+
+Write-Host "`n================ SPEED TEST ================`n" -ForegroundColor Green
+
+$speedtestdata
+
+Write-Host "`n=== NETWORK CONNECTIVITY TEST COMPLETED ===" -ForegroundColor Green
 
 ##########################################################################################################################################
