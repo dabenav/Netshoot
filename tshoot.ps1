@@ -202,7 +202,6 @@ foreach ($tsite in $PublicSites)
 $data | Add-Member -MemberType NoteProperty -Name "Public IP Address" -Value $PublicIPAddress
 
 
-
 ########################### getting output ############################
 
 $result += $data
