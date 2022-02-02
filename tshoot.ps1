@@ -31,7 +31,7 @@ $pingCount = 10
 #################################################################
 
 $data = New-Object -TypeName psobject
-$speedtestdata = New-Object -TypeName psobject
+$SpeedTestData = New-Object -TypeName psobject
 
 ############## Get Interface Name Information ###################
 
@@ -222,37 +222,37 @@ $downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download
 Invoke-WebRequest -Uri $downloaduri.href -OutFile ".\speedtest.zip" 
 Expand-Archive -Path ".\speedtest.zip" -DestinationPath ".\" -Force
 
-$speedtestresult = &"C:\temp\SpeedTest\speedtest.exe" --accept-license --format=json | ConvertFrom-Json
+$SpeedTestResult = &"C:\temp\SpeedTest\speedtest.exe" --accept-license --format=json | ConvertFrom-Json
 
 
-[PSCustomObject]$SpeedtestResultObject = @{
-    downloadspeed = [math]::Round($speedtestresult.download.bandwidth / 1000000 * 8, 2)
-    uploadspeed   = [math]::Round($speedtestresult.upload.bandwidth / 1000000 * 8, 2)
-    packetloss    = [math]::Round($speedtestresult.packetLoss)
-    isp           = $speedtestresult.isp
-    Location      = $speedtestresult.server.location
-    ExternalIP    = $speedtestresult.interface.externalIp
-    InternalIP    = $speedtestresult.interface.internalIp
-    UsedServer    = $speedtestresult.server.host
-    URL           = $speedtestresult.result.url
-    Jitter        = [math]::Round($speedtestresult.ping.jitter, 2)
-    Latency       = [math]::Round($speedtestresult.ping.latency, 2)
+[PSCustomObject]$SpeedTestObject = @{
+    downloadspeed = [math]::Round($SpeedTestResult.download.bandwidth / 1000000 * 8, 2)
+    uploadspeed   = [math]::Round($SpeedTestResult.upload.bandwidth / 1000000 * 8, 2)
+    packetloss    = [math]::Round($SpeedTestResult.packetLoss)
+    isp           = $SpeedTestResult.isp
+    Location      = $SpeedTestResult.server.location
+    ExternalIP    = $SpeedTestResult.interface.externalIp
+    InternalIP    = $SpeedTestResult.interface.internalIp
+    UsedServer    = $SpeedTestResult.server.host
+    URL           = $SpeedTestResult.result.url
+    Jitter        = [math]::Round($SpeedTestResult.ping.jitter, 2)
+    Latency       = [math]::Round($SpeedTestResult.ping.latency, 2)
 }
 
 
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "ISP" -Value $SpeedtestResultObject.isp -Force
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Location" -Value $SpeedtestResultObject.location -Force
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value $SpeedtestResultObject.downloadspeed -Force
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value $SpeedtestResultObject.uploadspeed -Force
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Latency" -Value $SpeedtestResultObject.latency -Force
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Jitter" -Value $SpeedtestResultObject.Jitter -Force
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Packet Loss" -Value $SpeedtestResultObject.packetloss -Force
-#$speedtestdata | Add-Member -MemberType NoteProperty -Name "External IP" -Value $SpeedtestResultObject.externalip -Force
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $SpeedTestObject.isp -Force
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Location" -Value $SpeedTestObject.location -Force
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value $SpeedTestObject.downloadspeed -Force
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value $SpeedTestObject.uploadspeed -Force
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Latency" -Value $SpeedTestObject.latency -Force
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Jitter" -Value $SpeedTestObject.Jitter -Force
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Packet Loss" -Value $SpeedTestObject.packetloss -Force
+#$SpeedTestData | Add-Member -MemberType NoteProperty -Name "External IP" -Value $SpeedTestObject.externalip -Force
 
 Write-Host "`n================ SPEED TEST ================`n" -ForegroundColor Green
 
-$speedtestdata
+$SpeedTestData
 
-Write-Host "`n=== NETWORK CONNECTIVITY TEST COMPLETED ===" -ForegroundColor Green
+Write-Host "=== NETWORK CONNECTIVITY TEST COMPLETED ===" -ForegroundColor Green
 
 ##########################################################################################################################################
