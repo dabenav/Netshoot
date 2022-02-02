@@ -31,6 +31,7 @@ $pingCount = 2
 #################################################################
 
 $data = New-Object -TypeName psobject
+$speedtestdata = New-Object -TypeName psobject
 
 ############## Get Interface Name Information ###################
 
