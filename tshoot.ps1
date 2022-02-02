@@ -197,12 +197,9 @@ foreach ($tsite in $PublicSites)
    }
 }
 
-
 ####################### Get Public IP Address  ########################
 
 $data | Add-Member -MemberType NoteProperty -Name "Public IP Address" -Value $PublicIPAddress
-
-
 
 ########################### getting output ############################
 
@@ -212,8 +209,7 @@ Write-Host "`n================ RESULTS ================" -ForegroundColor Green
 
 $result
 
-
-####################### Speed Test  ########################
+########################### Speed Test  ###########################
 
 Write-Host "`nRunning Speed Test..." -ForegroundColor Gray
 
@@ -253,6 +249,6 @@ Write-Host "`n================ SPEED TEST ================`n" -ForegroundColor G
 
 $SpeedTestData
 
-Write-Host "=== NETWORK CONNECTIVITY TEST COMPLETED ===" -ForegroundColor Green
+Write-Host "==== NETWORK CONNECTIVITY TEST COMPLETED ====" -ForegroundColor Green
 
 ##########################################################################################################################################
