@@ -237,14 +237,14 @@ $speedtestresult = &".\speedtest.exe" --accept-license --accept-gdpr --format=js
     Latency       = [math]::Round($Speedtest.ping.latency, 2)
 }
 
-$data | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestresult.isp -Force
-$data | Add-Member -MemberType NoteProperty -Name "Location" -Value $speedtestresult.location -Force
-$data | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value $speedtestresult.downloadspeed -Force
-$data | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value $speedtestresult.uploadspeed -Force
-$data | Add-Member -MemberType NoteProperty -Name "Latency" -Value $speedtestresult.latency -Force
-$data | Add-Member -MemberType NoteProperty -Name "Jitter" -Value $speedtestresult.Jitter -Force
-#$data | Add-Member -MemberType NoteProperty -Name "External IP" -Value $speedtestresult.externalip -Force
-
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestresult.isp -Force
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Location" -Value $speedtestresult.location -Force
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value $speedtestresult.downloadspeed -Force
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value $speedtestresult.uploadspeed -Force
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Latency" -Value $speedtestresult.latency -Force
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Jitter" -Value $speedtestresult.Jitter -Force
+$speedtestdata | Add-Member -MemberType NoteProperty -Name "Packet Loss" -Value $speedtestresult.packetloss -Force
+#$speedtestdata | Add-Member -MemberType NoteProperty -Name "External IP" -Value $speedtestresult.externalip -Force
 
 Write-Host "`n================ SPEED TEST ================`n" -ForegroundColor Green
 
