@@ -202,6 +202,7 @@ foreach ($tsite in $PublicSites)
 $data | Add-Member -MemberType NoteProperty -Name "Public IP Address" -Value $PublicIPAddress
 
 
+
 ########################### getting output ############################
 
 $result += $data
@@ -220,16 +221,30 @@ $downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download
 Invoke-WebRequest -Uri $downloaduri.href -OutFile ".\speedtest.zip" 
 Expand-Archive -Path ".\speedtest.zip" -DestinationPath ".\" -Force
 
-$speedtestresult = &".\speedtest.exe" --accept-license --format=json | ConvertFrom-Json 
+$speedtestresult = &".\speedtest.exe" --accept-license --accept-gdpr --format=json | ConvertFrom-Json 
 
-$speedtestdata = New-Object psobject
+[PSCustomObject]$speedtestresult = @{
+    downloadspeed = [math]::Round($Speedtest.download.bandwidth / 1000000 * 8, 2)
+    uploadspeed   = [math]::Round($Speedtest.upload.bandwidth / 1000000 * 8, 2)
+    packetloss    = [math]::Round($Speedtest.packetLoss)
+    isp           = $Speedtest.isp
+    Location      = $Speedtest.server.location
+    ExternalIP    = $Speedtest.interface.externalIp
+    InternalIP    = $Speedtest.interface.internalIp
+    UsedServer    = $Speedtest.server.host
+    URL           = $Speedtest.result.url
+    Jitter        = [math]::Round($Speedtest.ping.jitter, 2)
+    Latency       = [math]::Round($Speedtest.ping.latency, 2)
+}
 
-$speedtestdata | Add-Member -MemberType NoteProperty -Name ISP -Value $speedtestresult.isp
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value ([math]::Round($speedtestresult.download.bandwidth / 1000000 * 8, 2))
-$speedtestdata | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value ([math]::Round($speedtestresult.upload.bandwidth / 1000000 * 8, 2))
-$speedtestdata | Add-Member -MemberType NoteProperty -Name Latency -Value ([math]::Round($speedtestresult.ping.latency, 2))
-$speedtestdata | Add-Member -MemberType NoteProperty -Name Jitter -Value ([math]::Round($speedtestresult.ping.jitter, 2))
-#$speedtestdata | Add-Member -MemberType NoteProperty -Name "Public IP" -Value $speedtestresult.interface.externalIp
+$data | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestresult.isp -Force
+$data | Add-Member -MemberType NoteProperty -Name "Location" -Value $speedtestresult.location -Force
+$data | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value $speedtestresult.downloadspeed -Force
+$data | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value $speedtestresult.uploadspeed -Force
+$data | Add-Member -MemberType NoteProperty -Name "Latency" -Value $speedtestresult.latency -Force
+$data | Add-Member -MemberType NoteProperty -Name "Jitter" -Value $speedtestresult.Jitter -Force
+#$data | Add-Member -MemberType NoteProperty -Name "External IP" -Value $speedtestresult.externalip -Force
+
 
 Write-Host "`n================ SPEED TEST ================`n" -ForegroundColor Green
 
