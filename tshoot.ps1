@@ -218,7 +218,7 @@ $downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download
 Invoke-WebRequest -Uri $downloaduri.href -OutFile ".\speedtest.zip" 
 Expand-Archive -Path ".\speedtest.zip" -DestinationPath ".\" -Force
 
-$SpeedTestResult = &"C:\temp\SpeedTest\speedtest.exe" --accept-license --format=json | ConvertFrom-Json
+$SpeedTestResult = &".\speedtest.exe" --accept-license --format=json | ConvertFrom-Json
 
 
 [PSCustomObject]$SpeedTestObject = @{
