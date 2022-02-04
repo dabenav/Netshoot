@@ -1,16 +1,21 @@
 ####################################################################################################################
-#  Name: NetworkTroubleshooting.ps1
-#  Task: To check network connectivity from local system to outside and Internal
+#  Name: NetworkTroubleshooting Script
+#  Task: To verify how is the network connectivity 
 #  Architech: Daniel Benavides
 ####################################################################################################################
 
-Write-Host "`nStarting Network Connectivity test....." -ForegroundColor Gray
+Write-Host "`nStarting Network Connectivity test....." -ForegroundColor DarkGray
 
 $result = $null
 $data = $null
-# Get IP Configuration details from Worksttion
-$IPDetails = Get-NetIPConfiguration | where{ ($_.NetAdapter.Status -eq 'UP') -and ($_.IPv4DefaultGateway -ne $null) }
+$SpeedTestData = $null
+$SpeedTestresults = $null
 $result = @()
+$SpeedTestresults = @()
+
+# Get IP Configuration details from Worksttion
+
+$IPDetails = Get-NetIPConfiguration | where{ ($_.NetAdapter.Status -eq 'UP') -and ($_.IPv4DefaultGateway -ne $null) }
 
 # Setting up standard variable for output as required. Do not edit these variables.
 
@@ -26,7 +31,7 @@ $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "cisco.com", "ibm.com"
-$pingCount = 10
+$pingCount = 2
 
 #################################################################
 
@@ -48,22 +53,22 @@ if ($lost -eq 0 )
 {
     $GetewayPingStatus = "Excelent"   
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nAverage Gateway response time is $average ms" -ForegroundColor Gray
-    Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray
+    Write-Host "`nAverage Gateway response time is $average ms" -ForegroundColor DarkGray
+    Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor DarkGray
 }
 elseIf($lost -lt $pingCount -and $lost -gt 0)
 {
     $GetewayPingStatus = "Poor"    
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nAverage Gateway response time is $average ms" -ForegroundColor Gray
-    Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray
+    Write-Host "`nAverage Gateway response time is $average ms" -ForegroundColor DarkGray
+    Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor DarkGray
 }
 else
 {
     $GetewayPingStatus = "Fail"
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nAverage Gateway response time is $average ms" -ForegroundColor Gray  
-    Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor Gray  
+    Write-Host "`nAverage Gateway response time is $average ms" -ForegroundColor DarkGray  
+    Write-Host "Success Rate: $((($pingCount - $lost) / $pingCount) * 100)%`n" -ForegroundColor DarkGray  
 }
 
 # Test DNS Connectivity
@@ -79,22 +84,22 @@ foreach ($DNS in $DNSs)
     {
         $DNSPingBlnk = "Excelent"        
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS response time is $average1 ms" -ForegroundColor Gray
-        Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor Gray  
+        Write-Host "Average DNS response time is $average1 ms" -ForegroundColor DarkGray
+        Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor DarkGray  
     }
     elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
     {
         $DNSPingBlnk = "Poor"       
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS response time is $average1 ms" -ForegroundColor Gray
-        Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor Gray
+        Write-Host "Average DNS response time is $average1 ms" -ForegroundColor DarkGray
+        Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor DarkGray
     }
     else
     {
         $DNSPingBlnk = "Fail"
         $data  | Add-Member -MemberType NoteProperty -Name "DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS response time is $average1 ms" -ForegroundColor Gray
-        Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor Gray
+        Write-Host "Average DNS response time is $average1 ms" -ForegroundColor DarkGray
+        Write-Host "Success Rate: $((($pingCount - $lost1) / $pingCount) * 100)%`n" -ForegroundColor DarkGray
     }
       
 }
@@ -109,18 +114,18 @@ if ($domain -ne "Workgroup")
     if ($domainPing)
     {
         $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
-        Write-Host "Average Domain response time is $average2 ms" -ForegroundColor Gray
+        Write-Host "Average Domain response time is $average2 ms" -ForegroundColor DarkGray
     }
     else
     {
         $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
-        Write-Host "Average Domain response time is $average2 ms" -ForegroundColor Gray
+        Write-Host "Average Domain response time is $average2 ms" -ForegroundColor DarkGray
     }             
 }
 else
 {
     $data | Add-Member -MemberType NoteProperty -Name "Domain" -Value "No Domain Name" -Force
-    Write-Host "The system is not joined to a domain`n" -ForegroundColor Gray
+    Write-Host "The system is not joined to a domain`n" -ForegroundColor DarkGray
 }
 
 # Public DNS Status
@@ -136,22 +141,22 @@ foreach ($PDNS in $PublicDNS)
     {
         $PDNSPingBlnk = "Excelent"        
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS Average DNS response time is $average3 ms" -ForegroundColor Gray
-        Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
+        Write-Host "$PDNS Average DNS response time is $average3 ms" -ForegroundColor DarkGray
+        Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor DarkGray
     }
     elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
     {
         $PDNSPingBlnk = "Poor"       
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS Average DNS response time is $average3 ms" -ForegroundColor Gray
-        Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
+        Write-Host "$PDNS Average DNS response time is $average3 ms" -ForegroundColor DarkGray
+        Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor DarkGray
     }
     else
     {
         $PDNSPingBlnk = "Fail"
         $data | Add-Member -MemberType NoteProperty -Name $PDNS -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS Average DNS response time is $average3 ms" -ForegroundColor Gray
-        Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor Gray
+        Write-Host "$PDNS Average DNS response time is $average3 ms" -ForegroundColor DarkGray
+        Write-Host "Success Rate: $((($pingCount - $lost3) / $pingCount) * 100)%`n" -ForegroundColor DarkGray
     }
       
 }
@@ -164,12 +169,12 @@ foreach ($item in $PublicSites)
    if ($ItemIP)
    {
       $data | Add-Member -MemberType NoteProperty -Name "DNS Resolve $item" -Value "Success" -Force
-      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor Gray
+      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor DarkGray
    }
    else
    {
       $data | Add-Member -MemberType NoteProperty -Name  $data  -Value "Failed" -Force
-      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor Gray
+      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor DarkGray
    }
       
  }
@@ -186,20 +191,20 @@ foreach ($tsite in $PublicSites)
        if ($telnetTest.TcpTestSucceeded -eq "True")
        {
            $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Success" -Force
-           Write-Host "Port Connectivity test completed for $tsite" -ForegroundColor Gray
+           Write-Host "Port Connectivity test completed for $tsite" -ForegroundColor DarkGray
        }
        else
        {
            $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Failed" -Force
-           Write-Host "Port Connectivity test completed for $tsite" -ForegroundColor Gray
+           Write-Host "Port Connectivity test completed for $tsite" -ForegroundColor DarkGray
        }
           
    }
 }
 
-####################### Get Public IP Address  ########################
+# Print Public IP Address 
 
-$data | Add-Member -MemberType NoteProperty -Name "Public IP Address" -Value $PublicIPAddress
+Write-Host "The Public IP Address is $PublicIPAddress" -ForegroundColor DarkGray
 
 ########################### getting output ############################
 
@@ -209,9 +214,9 @@ Write-Host "`n================ RESULTS ================" -ForegroundColor Green
 
 $result
 
-########################### Speed Test  ###########################
+########################### Speed Test Results ###########################
 
-Write-Host "`nRunning Speed Test..." -ForegroundColor Gray
+Write-Host "`nRunning Speed Test...`n" -ForegroundColor DarkGray
 
 $Speedtesturi = Invoke-WebRequest -Uri "https://www.speedtest.net/apps/cli" -UseBasicParsing
 $downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download for Windows*"}
@@ -224,9 +229,9 @@ $SpeedTestResult = &".\speedtest.exe" --accept-license --format=json | ConvertFr
 [PSCustomObject]$SpeedTestObject = @{
     downloadspeed = [math]::Round($SpeedTestResult.download.bandwidth / 1000000 * 8, 2)
     uploadspeed   = [math]::Round($SpeedTestResult.upload.bandwidth / 1000000 * 8, 2)
-    packetloss    = [math]::Round($SpeedTestResult.packetLoss)
-    isp           = $SpeedTestResult.isp
+    ISP           = $SpeedTestResult.isp
     Location      = $SpeedTestResult.server.location
+    Country       = $SpeedTestResult.server.country
     ExternalIP    = $SpeedTestResult.interface.externalIp
     InternalIP    = $SpeedTestResult.interface.internalIp
     UsedServer    = $SpeedTestResult.server.host
@@ -235,20 +240,58 @@ $SpeedTestResult = &".\speedtest.exe" --accept-license --format=json | ConvertFr
     Latency       = [math]::Round($SpeedTestResult.ping.latency, 2)
 }
 
+# Speed Test Logs
 
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $SpeedTestObject.isp -Force
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Location" -Value $SpeedTestObject.location -Force
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value $SpeedTestObject.downloadspeed -Force
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value $SpeedTestObject.uploadspeed -Force
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Latency" -Value $SpeedTestObject.latency -Force
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Jitter" -Value $SpeedTestObject.Jitter -Force
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Packet Loss" -Value $SpeedTestObject.packetloss -Force
-#$SpeedTestData | Add-Member -MemberType NoteProperty -Name "External IP" -Value $SpeedTestObject.externalip -Force
+Write-Host ("The Internet Service Provider is " + $speedtestobject.ISP ) -ForegroundColor DarkGray
+Write-Host ("The Speed Test Server Location is " + $speedtestobject.Location ) -ForegroundColor DarkGray
+Write-Host ("The Speed Test Server Country is " + $speedtestobject.Country ) -ForegroundColor DarkGray
+Write-Host ("The Download Spped is " + $speedtestobject.downloadspeed +" Mbps") -ForegroundColor DarkGray
+Write-Host ("The Upload speed is " + $speedtestobject.uploadspeed + " Mbps") -ForegroundColor DarkGray
+Write-Host ("The Latency is " + $SpeedTestObject.latency + " ms") -ForegroundColor DarkGray
+Write-Host ("The Jitter is " + $SpeedTestObject.Jitter + " ms") -ForegroundColor DarkGray
+
+
+# Analisis of the Speed Test 
+
+# Analisis For Download Speed
+
+$SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestobject.ISP -Force
+
+if ($SpeedTestObject.downloadspeed -le 5){
+    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value "Slow" -Force
+}
+
+   elseif ($SpeedTestObject.downloadspeed -le 10) {
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value "Good" -Force
+    }
+
+    else {
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value "Excellent" -Force
+    }
+
+# Analisis For Upload Speed
+
+if ($SpeedTestObject.uploadspeed -le 2){
+    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value "Slow" -Force
+}
+
+    elseif ($SpeedTestObject.uploadspeed -le 5) {
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value "Good" -Force
+    }
+
+    else {
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value "Excellent" -Force
+    }
+
+
+# Print the Analisis for the Speed Test
 
 Write-Host "`n================ SPEED TEST ================`n" -ForegroundColor Green
 
-$SpeedTestData
+$SpeedTestresults += $SpeedTestData
 
-Write-Host "==== NETWORK CONNECTIVITY TEST COMPLETED ====" -ForegroundColor Green
+$SpeedTestresults
+
+Write-Host "==== NETWORK CONNECTIVITY TEST COMPLETED ====" -ForegroundColor DarkGray
 
 ##########################################################################################################################################
