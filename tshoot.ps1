@@ -316,7 +316,7 @@ Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
     # Signal (%)
     $SignalLevelPercent_line = $NetshOut | Select-String -Pattern 'Signal'
     $SignalLevelPercent = ($SignalLevelPercent_line -split ":")[-1].Trim()
-    $SignalPercentInt = [int]($SignalLevelPercent -replace “.$”)
+    $SignalPercentInt = [int]($SignalLevelPercent -replace ".$")
 
     if ($SignalPercentInt -lt 50){
         $wifisignal = "Bad"        
