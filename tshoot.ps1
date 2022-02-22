@@ -12,6 +12,32 @@ $SpeedTestData = $null
 $SpeedTestresults = $null
 $result = @()
 $SpeedTestresults = @()
+# Clear WiFi variables
+$CurrentTime = '' 
+$Name = '' 
+$Description = '' 
+$GUID = '' 
+$Physical = '' 
+$State = '' 
+$SSID = '' 
+$BSSID = '' 
+$NetworkType = '' 
+$RadioType = '' 
+$Authentication = '' 
+$Cipher = '' 
+$Connection = '' 
+$Channel = '' 
+$RecRate = '' 
+$TransRate = '' 
+$SignalLevelPercent = '' 
+$SignalLeveldBm = 0
+$Profile = ''
+
+$wifidata = $null
+$wifidata = New-Object -TypeName psobject
+$wifiresult = $null
+$wifiresult = @()
+
 
 # Get IP Configuration details from Worksttion
 
@@ -27,22 +53,26 @@ $DNSs = $DNSServers.ServerAddresses
 $domain = (Get-WmiObject win32_computersystem).Domain
 $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.220).IPAddress
 
-############## Edit these variables as needed ###################
+
+########################## Edit these variables as needed ###############################
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "cisco.com", "ibm.com"
-$pingCount = 10
+$pingCount = 2
 
-#################################################################
+
+#########################################################################################
 
 $data = New-Object -TypeName psobject
 $SpeedTestData = New-Object -TypeName psobject
 
-############## Get Interface Name Information ###################
+
+########################## Get Interface Name Information ###############################
 
 $data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
 
-##################### Geteway Ping Test #########################
+
+################################# Geteway Ping Test #####################################
 
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
 $average = ($con.ResponseTime | Measure-Object -Average).Average
@@ -200,7 +230,161 @@ foreach ($tsite in $PublicSites)
 Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
 
 
-########################### Speed Test ###########################
+####################################### WiFi Settings ########################################
+
+Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
+
+
+  #Run netsh command to get wirelss profile info
+  $NetshOut = netsh.exe wlan show interfaces
+
+  # Get time to time-stamp entry
+  $CurrentTime = Get-Date
+
+  # Name
+  $Name_line = $NetshOut | Select-String -Pattern 'Name'
+  $Name = ($Name_line -split ":")[-1].Trim()
+
+  # Description
+  $Description_line = $NetshOut | Select-String -Pattern 'Description'
+  $Description = ($Description_line -split ":")[-1].Trim()
+
+  # GUID
+  $GUID_line = $NetshOut | Select-String -Pattern 'GUID'
+  $GUID = ($GUID_line -split ":")[-1].Trim()
+
+  # Physical Address
+  $Physical_line = $NetshOut | Select-String -Pattern 'Physical'
+  $Physical = ($Physical_line -split ":", 2)[-1].Trim()
+
+  Write-Host ("The adapter mac address is: " + $Physical ) -ForegroundColor DarkGray
+
+  # State
+  $State_line = $NetshOut | Select-String -Pattern 'State'
+  $State = ($State_line -split ":")[-1].Trim()
+
+  if ($State -eq 'connected') {
+
+    ### SSID
+    $SSID_line = $NetshOut | Select-String 'SSID'| select -First 1
+    $SSID = ($SSID_line -split ":")[-1].Trim()
+
+    Write-Host ("The SSID is: " + $SSID ) -ForegroundColor DarkGray
+    $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Network" -Value $SSID -Force
+
+
+    ### BSSID
+    $BSSID_line = $NetshOut | Select-String -Pattern 'BSSID'
+    $BSSID = ($BSSID_line -split ":", 2)[-1].Trim()
+    
+    Write-Host ("The BSSID is: " + $BSSID ) -ForegroundColor DarkGray
+
+
+    ### NetworkType
+    $NetworkType_line = $NetshOut | Select-String -Pattern 'Network type'
+    $NetworkType = ($NetworkType_line -split ":")[-1].Trim()
+
+    ### RadioType
+    $RadioType_line = $NetshOut | Select-String -Pattern 'Radio type'
+    $RadioType = ($RadioType_line -split ":")[-1].Trim()
+
+    Write-Host ("The protocol is: " + $RadioType ) -ForegroundColor DarkGray
+
+
+    ### Authentication
+    $Authentication_line = $NetshOut | Select-String -Pattern 'Authentication'
+    $Authentication = ($Authentication_line -split ":")[-1].Trim()
+
+    Write-Host ("The Authentication is: " + $Authentication ) -ForegroundColor DarkGray
+
+
+    ### Cipher
+    $Cipher_line = $NetshOut | Select-String -Pattern 'Cipher'
+    $Cipher = ($Cipher_line -split ":")[-1].Trim()
+
+    ### Connection mode
+    $Connection_line = $NetshOut | Select-String -Pattern 'Connection mode'
+    $Connection = ($Connection_line -split ":")[-1].Trim()
+
+    ### Channel
+    $Channel_line = $NetshOut | Select-String -Pattern 'Channel'
+    $Channel = ($Channel_line -split ":")[-1].Trim()
+
+    Write-Host ("The Channel is: " + $Channel ) -ForegroundColor DarkGray
+
+
+    # Signal (%)
+    $SignalLevelPercent_line = $NetshOut | Select-String -Pattern 'Signal'
+    $SignalLevelPercent = ($SignalLevelPercent_line -split ":")[-1].Trim()
+    $SignalPercentInt = [int]($SignalLevelPercent -replace “.$”)
+
+    if ($SignalPercentInt -lt 50){
+        $wifisignal = "Bad"        
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+    }
+    elseIf($SignalPercentInt -lt 80){
+        $wifisignal = "Medium"       
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+    }
+    else{
+        $wifisignal = "Excellent"
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+    }
+
+    # Signal (dBm)
+    $SignalLevelPercent_trimmed = $SignalLevelPercent.TrimEnd('%')
+    $SignalLeveldBm = (([int]$SignalLevelPercent_trimmed)/2) - 100
+
+    Write-Host ("The Signal is: " +$SignalLevelPercent +" ," +$SignalLeveldBm +" dBm") -ForegroundColor DarkGray
+
+
+    ### Receive Rate
+    $RecRate_line = $NetshOut | Select-String -Pattern 'Receive rate'
+    $RecRate = [int]($RecRate_line -split ":")[-1].Trim()
+
+    Write-Host ("The Receive Rate is: " + $RecRate +" Mbps" ) -ForegroundColor DarkGray
+
+    if ($RecRate -lt 5){
+        $wifidownspeed = "Low"        
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+    }
+    elseIf($RecRate -lt 10){
+        $wifidownspeed = "Medium"       
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+    }
+    else{
+        $wifidownspeed = "Fast"
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+    }
+
+
+    # Transmit Rate
+    $TransRate_line = $NetshOut | Select-String -Pattern 'Transmit rate'
+    $TransRate = [int]($TransRate_line -split ":")[-1].Trim()
+
+    Write-Host ("The Transmit Rate is: " + $TransRate +" Mbps" ) -ForegroundColor DarkGray
+
+    if ($TransRate -lt 5){
+        $wifiuploadspeed = "Low"        
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+    }
+    elseIf($TransRate -lt 10){
+        $wifiuploadspeed = "Medium"       
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+    }
+    else{
+        $wifiuploadspeed = "Fast"
+        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+    }
+
+
+    # Profile
+    $Profile_line = $NetshOut | Select-String -Pattern 'Profile'
+    $Profile = ($Profile_line -split ":")[-1].Trim()
+  }
+
+
+####################################### Speed Test #######################################
 
 Write-Host "`nRunning Speed Test...`n" -ForegroundColor DarkGray
 
@@ -239,50 +423,50 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 
 # Analisis of the Speed Test 
 
-# Analisis For Download Speed
+# Analisis For ISP Download Speed
 
 $SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestobject.ISP -Force
 
 if ($SpeedTestObject.downloadspeed -le 5){
-    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Download Speed" -Value "Slow" -Force
+    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Slow" -Force
 }
 
    elseif ($SpeedTestObject.downloadspeed -le 10) {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Download Speed" -Value "Good" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Good" -Force
     }
 
     else {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Download Speed" -Value "Excellent" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Excellent" -Force
     }
 
-# Analisis For Upload Speed
+# Analisis For ISP Upload Speed
 
 if ($SpeedTestObject.uploadspeed -le 2){
-    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Upload Speed" -Value "Slow" -Force
+    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Slow" -Force
 }
 
     elseif ($SpeedTestObject.uploadspeed -le 5) {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Upload Speed" -Value "Good" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Good" -Force
     }
 
     else {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Upload Speed" -Value "Excellent" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Excellent" -Force
     }
 
-########################### getting output ############################
+
+####################################### getting output ########################################
+
+# Print local tests Analisis
+$result += $data
+$wifiresult += $wifidata
+$SpeedTestresults += $SpeedTestData
 
 Write-Host "`n============= NETWORKING TESTS =============" -ForegroundColor Green
-
-$result += $data
-$result
-
-# Print the Analisis for the Speed Test
-
-Write-Host "`n================ SPEED TEST ================`n" -ForegroundColor Green
-
-$SpeedTestresults += $SpeedTestData
-$SpeedTestresults
-
+$result | Format-List
+Write-Host   "============== WIFI SETTINGS ==============" -ForegroundColor Green
+$wifiresult | Format-List
+Write-Host "================ SPEED TEST ================" -ForegroundColor Green
+$SpeedTestresults  | Format-List
 Write-Host   "============== TESTS COMPLETED =============" -ForegroundColor Green
 
 ##########################################################################################################################################
