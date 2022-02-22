@@ -31,7 +31,7 @@ $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "cisco.com", "ibm.com"
-$pingCount = 2
+$pingCount = 10
 
 #################################################################
 
@@ -244,29 +244,29 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 $SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestobject.ISP -Force
 
 if ($SpeedTestObject.downloadspeed -le 5){
-    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value "Slow" -Force
+    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Download Speed" -Value "Slow" -Force
 }
 
    elseif ($SpeedTestObject.downloadspeed -le 10) {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value "Good" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Download Speed" -Value "Good" -Force
     }
 
     else {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Download Speed" -Value "Excellent" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Download Speed" -Value "Excellent" -Force
     }
 
 # Analisis For Upload Speed
 
 if ($SpeedTestObject.uploadspeed -le 2){
-    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value "Slow" -Force
+    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Upload Speed" -Value "Slow" -Force
 }
 
     elseif ($SpeedTestObject.uploadspeed -le 5) {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value "Good" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Upload Speed" -Value "Good" -Force
     }
 
     else {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Upload Speed" -Value "Excellent" -Force
+        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Intrnet Upload Speed" -Value "Excellent" -Force
     }
 
 ########################### getting output ############################
