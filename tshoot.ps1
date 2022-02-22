@@ -58,7 +58,7 @@ $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "cisco.com", "ibm.com"
-$pingCount = 10
+$pingCount = 2
 
 
 #########################################################################################
@@ -165,6 +165,7 @@ if ($domain -ne "Workgroup")
   $average2 = ($domainPing.ResponseTime | Measure-Object -Average).Average
   $lost2 = $pingCount-($domainPing.count)
   $data | Add-Member -MemberType NoteProperty -Name "Domain Name" -Value $domain -Force
+    
     if ($domainPing)
     {
         $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
@@ -232,38 +233,40 @@ Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGra
 
 ####################################### WiFi Settings ########################################
 
-Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
 
+if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
+{  
+    Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
 
-  #Run netsh command to get wirelss profile info
-  $NetshOut = netsh.exe wlan show interfaces
+    #Run netsh command to get wirelss profile info
+    $NetshOut = netsh.exe wlan show interfaces
 
-  # Get time to time-stamp entry
-  $CurrentTime = Get-Date
+    # Get time to time-stamp entry
+    $CurrentTime = Get-Date
 
-  # Name
-  $Name_line = $NetshOut | Select-String -Pattern 'Name'
-  $Name = ($Name_line -split ":")[-1].Trim()
+    # Name
+    $Name_line = $NetshOut | Select-String -Pattern 'Name'
+    $Name = ($Name_line -split ":")[-1].Trim()
 
-  # Description
-  $Description_line = $NetshOut | Select-String -Pattern 'Description'
-  $Description = ($Description_line -split ":")[-1].Trim()
+    # Description
+    $Description_line = $NetshOut | Select-String -Pattern 'Description'
+    $Description = ($Description_line -split ":")[-1].Trim()
 
-  # GUID
-  $GUID_line = $NetshOut | Select-String -Pattern 'GUID'
-  $GUID = ($GUID_line -split ":")[-1].Trim()
+    # GUID
+    $GUID_line = $NetshOut | Select-String -Pattern 'GUID'
+    $GUID = ($GUID_line -split ":")[-1].Trim()
 
-  # Physical Address
-  $Physical_line = $NetshOut | Select-String -Pattern 'Physical'
-  $Physical = ($Physical_line -split ":", 2)[-1].Trim()
+    # Physical Address
+    $Physical_line = $NetshOut | Select-String -Pattern 'Physical'
+    $Physical = ($Physical_line -split ":", 2)[-1].Trim()
 
-  Write-Host ("The adapter mac address is: " + $Physical ) -ForegroundColor DarkGray
+    Write-Host ("The adapter mac address is: " + $Physical ) -ForegroundColor DarkGray
 
-  # State
-  $State_line = $NetshOut | Select-String -Pattern 'State'
-  $State = ($State_line -split ":")[-1].Trim()
+    # State
+    $State_line = $NetshOut | Select-String -Pattern 'State'
+    $State = ($State_line -split ":")[-1].Trim()
 
-  if ($State -eq 'connected') {
+    if ($State -eq 'connected') {
 
     ### SSID
     $SSID_line = $NetshOut | Select-String 'SSID'| select -First 1
@@ -381,8 +384,13 @@ Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
     # Profile
     $Profile_line = $NetshOut | Select-String -Pattern 'Profile'
     $Profile = ($Profile_line -split ":")[-1].Trim()
-  }
+    }
+}
 
+else 
+{
+Write-Host "`nDevice is Not connected to WiFi`n" -ForegroundColor DarkGray
+}
 
 ####################################### Speed Test #######################################
 
@@ -427,17 +435,19 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 
 $SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestobject.ISP -Force
 
-if ($SpeedTestObject.downloadspeed -le 5){
+if ($SpeedTestObject.downloadspeed -le 5)
+{
     $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Slow" -Force
 }
-
-   elseif ($SpeedTestObject.downloadspeed -le 10) {
+   elseif ($SpeedTestObject.downloadspeed -le 10) 
+   {
         $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Good" -Force
-    }
+   }
 
-    else {
+   else 
+   {
         $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Excellent" -Force
-    }
+   }
 
 # Analisis For ISP Upload Speed
 
@@ -463,8 +473,13 @@ $SpeedTestresults += $SpeedTestData
 
 Write-Host "`n============= NETWORKING TESTS =============" -ForegroundColor Green
 $result | Format-List
-Write-Host   "============== WIFI SETTINGS ==============" -ForegroundColor Green
-$wifiresult | Format-List
+
+if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
+{
+    Write-Host   "============== WIFI SETTINGS ==============" -ForegroundColor Green
+    $wifiresult | Format-List
+}
+
 Write-Host "================ SPEED TEST ================" -ForegroundColor Green
 $SpeedTestresults  | Format-List
 Write-Host   "============== TESTS COMPLETED =============" -ForegroundColor Green
