@@ -37,7 +37,8 @@ $wifidata = $null
 $wifidata = New-Object -TypeName psobject
 $wifiresult = $null
 $wifiresult = @()
-
+$data = New-Object -TypeName psobject
+$SpeedTestData = New-Object -TypeName psobject
 
 # Get Best Route IP Configuration details
 
@@ -52,6 +53,7 @@ Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGra
 # Setting up standard variable for output as required. Do not edit these variables.
 
 $InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
+$IfUpDescriptions = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceDescription
 $counter = 1
 $IP = $IPDetails.IPv4Address.IPAddress
 $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
@@ -68,17 +70,11 @@ $PublicSites = "cisco.com", "ibm.com"
 $pingCount = 2
 
 
-#########################################################################################
-
-$data = New-Object -TypeName psobject
-$SpeedTestData = New-Object -TypeName psobject
-
-
 ########################## Get Interface Name Information ###############################
 
-foreach ($InterfaceUp in $InterfacesUp)
+foreach ($IfUpDescription in $IfUpDescriptions)
     {
-    Write-Host "Interface $InterfaceUp, is Up" -ForegroundColor DarkGray
+    Write-Host "Interface $IfUpDescription is Up" -ForegroundColor DarkGray
     }
 
 $data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
