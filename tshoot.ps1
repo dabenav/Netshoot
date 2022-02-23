@@ -4,7 +4,7 @@
 #  Architech: Daniel Benavides
 ####################################################################################################################
 
-Write-Host "`nStarting Network Connectivity test....." -ForegroundColor DarkGray
+Write-Host "`nStarting Network Connectivity test.....`n" -ForegroundColor DarkGray
 
 $result = $null
 $data = $null
@@ -39,12 +39,19 @@ $wifiresult = $null
 $wifiresult = @()
 
 
-# Get IP Configuration details from Worksttion
+# Get Best Route IP Configuration details
 
-$IPDetails = Get-NetIPConfiguration | where{ ($_.NetAdapter.Status -eq 'UP') -and ($_.IPv4DefaultGateway -ne $null) }
+$BestRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | sort RouteMetric | Select-Object -First 1
+$DefaultIfIndex = $BestRoute.ifIndex
+$DefaultInterface = $BestRoute.InterfaceAlias
+
+$IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
+
+Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
 
 # Setting up standard variable for output as required. Do not edit these variables.
 
+$InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
 $counter = 1
 $IP = $IPDetails.IPv4Address.IPAddress
 $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
@@ -58,7 +65,7 @@ $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "cisco.com", "ibm.com"
-$pingCount = 10
+$pingCount = 2
 
 
 #########################################################################################
@@ -68,6 +75,11 @@ $SpeedTestData = New-Object -TypeName psobject
 
 
 ########################## Get Interface Name Information ###############################
+
+foreach ($InterfaceUp in $InterfacesUp)
+    {
+    Write-Host "Interface $InterfaceUp, is Up" -ForegroundColor DarkGray
+    }
 
 $data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
 
@@ -83,19 +95,19 @@ if ($lost -eq 0 )
 {
     $GetewayPingStatus = "Excelent"   
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nAverage Gateway response time is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
+    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
 }
 elseIf($lost -lt $pingCount -and $lost -gt 0)
 {
     $GetewayPingStatus = "Poor"    
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nAverage Gateway response time is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
+    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
 }
 else
 {
     $GetewayPingStatus = "Fail"
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "`nAverage Gateway response time is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
+    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
 }
 
 # Test DNS Connectivity
@@ -111,19 +123,19 @@ foreach ($DNS in $DNSs)
     {
         $DNSPingBlnk = "Excelent"        
         $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS server $DNS time is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Average DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
     }
     elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
     {
         $DNSPingBlnk = "Poor"       
         $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS server $DNS time is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Average DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
     }
     else
     {
         $DNSPingBlnk = "Fail"
         $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS server $DNS time is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Average DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
     }
 }
 
@@ -387,10 +399,6 @@ if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
     }
 }
 
-else 
-{
-Write-Host "`nDevice is Not connected to WiFi`n" -ForegroundColor DarkGray
-}
 
 ####################################### Speed Test #######################################
 
@@ -464,24 +472,23 @@ if ($SpeedTestObject.uploadspeed -le 2){
     }
 
 
-####################################### getting output ########################################
+####################################### Printing output Analisis ########################################
 
-# Print local tests Analisis
-$result += $data
-$wifiresult += $wifidata
-$SpeedTestresults += $SpeedTestData
-
-Write-Host "`n============= NETWORKING TESTS =============" -ForegroundColor Green
-$result | Format-List
-
-if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
-{
-    Write-Host   "============== WIFI SETTINGS ==============" -ForegroundColor Green
-    $wifiresult | Format-List
-}
-
-Write-Host "================ SPEED TEST ================" -ForegroundColor Green
-$SpeedTestresults  | Format-List
-Write-Host   "============== TESTS COMPLETED =============" -ForegroundColor Green
+#$result += $data
+#$wifiresult += $wifidata
+#$SpeedTestresults += $SpeedTestData
+#
+#Write-Host "`nNETWORKING TESTS " -ForegroundColor Green
+#$result | Format-List
+#
+#if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
+#{
+#    Write-Host   " WIFI SETTINGS " -ForegroundColor Green
+#    $wifiresult | Format-List
+#}
+#
+#Write-Host " SPEED TEST " -ForegroundColor Green
+#$SpeedTestresults  | Format-List
+#Write-Host   " Network Connectivity Tests Completed " -ForegroundColor Green
 
 ##########################################################################################################################################
