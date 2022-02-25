@@ -74,7 +74,7 @@ $pingCount = 10
 
 foreach ($IfUpDescription in $IfUpDescriptions)
     {
-    Write-Host "Interface $IfUpDescription is Up" -ForegroundColor DarkGray
+    Write-Host "Interface $IfUpDescription is UP" -ForegroundColor DarkGray
     }
 
 $data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
