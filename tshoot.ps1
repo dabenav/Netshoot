@@ -201,21 +201,20 @@ foreach ($item in $PublicSites)
    if ($ItemIP)
    {
       $data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
-      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor DarkGray
+      Write-Host "DNS Resolved for $item was OK" -ForegroundColor DarkGray
    }
    else
    {
       $data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
-      Write-Host "DNS Resolved Successfully for $item" -ForegroundColor DarkGray
+      Write-Host "DNS Resolved for $item FAILED" -ForegroundColor DarkGray
    }
-      
  }
  
 # Telnet Test to public Sites on port 80 and 443
 
 foreach ($tsite in $PublicSites)
 {
-   $ports = "443"  #"80"
+   $ports = "80", "443"
    
    foreach ($port in $ports)
    {
@@ -223,14 +222,13 @@ foreach ($tsite in $PublicSites)
        if ($telnetTest.TcpTestSucceeded -eq "True")
        {
            $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Success" -Force
-           Write-Host "Port Connectivity test for $tsite was OK" -ForegroundColor DarkGray
+           Write-Host "Port Connectivity test for $tsite on port $port was OK" -ForegroundColor DarkGray
        }
        else
        {
            $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Failed" -Force
-           Write-Host "Port Connectivity test for $tsite FAILED" -ForegroundColor DarkGray
+           Write-Host "Port Connectivity test for $tsite on port $port FAILED" -ForegroundColor DarkGray
        }
-          
    }
 }
 
