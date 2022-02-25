@@ -103,7 +103,7 @@ else
 {
     $GetewayPingStatus = "Fail"
     $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
+    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor red
 }
 
 # Test DNS Connectivity
@@ -119,19 +119,19 @@ foreach ($DNS in $DNSs)
     {
         $DNSPingBlnk = "Excelent"        
         $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
     }
     elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
     {
         $DNSPingBlnk = "Poor"       
         $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
     }
     else
     {
         $DNSPingBlnk = "Fail"
         $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor red 
     }
 }
 
@@ -148,19 +148,19 @@ foreach ($PDNS in $PublicDNS)
     {
         $PDNSPingBlnk = "Excelent"        
         $data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "Average DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
+        Write-Host "Average Public DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
     }
     elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
     {
         $PDNSPingBlnk = "Poor"       
         $data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "Average DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
+        Write-Host "Average Public DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
     }
     else
     {
         $PDNSPingBlnk = "Fail"
         $data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS Average DNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
+        Write-Host "$PDNS Average Public DNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor red
     }
       
 }
@@ -206,7 +206,7 @@ foreach ($item in $PublicSites)
    else
    {
       $data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
-      Write-Host "DNS Resolved for $item FAILED" -ForegroundColor DarkGray
+      Write-Host "DNS Resolved for $item FAILED" -ForegroundColor red
    }
  }
  
@@ -227,7 +227,7 @@ foreach ($tsite in $PublicSites)
        else
        {
            $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Failed" -Force
-           Write-Host "Port Connectivity test for $tsite on port $port FAILED" -ForegroundColor DarkGray
+           Write-Host "Port Connectivity test for $tsite on port $port FAILED" -ForegroundColor red
        }
    }
 }
