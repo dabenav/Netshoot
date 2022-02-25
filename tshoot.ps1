@@ -1,7 +1,7 @@
 ####################################################################################################################
 #  Name: NetworkTroubleshooting Script
-#  Task: To verify how is the network connectivity 
-#  Architech: Daniel Benavides
+#  Task: To verify the network connectivity performance and errors
+#  By: Daniel Benavides
 ####################################################################################################################
 
 Write-Host "`nStarting Network Connectivity test.....`n" -ForegroundColor DarkGray
@@ -77,7 +77,7 @@ foreach ($IfUpDescription in $IfUpDescriptions)
     Write-Host "Interface $IfUpDescription is UP" -ForegroundColor DarkGray
     }
 
-$data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
+#$data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
 
 
 ################################# Geteway Ping Test #####################################
@@ -90,19 +90,19 @@ $lost = $pingCount-($con.count)
 if ($lost -eq 0 )
 {
     $GetewayPingStatus = "Excelent"   
-    $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
+   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
     Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
 }
 elseIf($lost -lt $pingCount -and $lost -gt 0)
 {
     $GetewayPingStatus = "Poor"    
-    $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
+   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
     Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
 }
 else
 {
     $GetewayPingStatus = "Fail"
-    $data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
+   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
     Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor red
 }
 
@@ -118,19 +118,19 @@ foreach ($DNS in $DNSs)
     if ($lost1 -eq 0 )
     {
         $DNSPingBlnk = "Excelent"        
-        $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
+        #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
         Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
     }
     elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
     {
         $DNSPingBlnk = "Poor"       
-        $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
+        #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
         Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
     }
     else
     {
         $DNSPingBlnk = "Fail"
-        $data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
+        #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
         Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor red 
     }
 }
@@ -147,19 +147,19 @@ foreach ($PDNS in $PublicDNS)
     if ($lost3 -eq 0 )
     {
         $PDNSPingBlnk = "Excelent"        
-        $data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
+       #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
         Write-Host "Average Public DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
     }
     elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
     {
         $PDNSPingBlnk = "Poor"       
-        $data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
+       #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
         Write-Host "Average Public DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
     }
     else
     {
         $PDNSPingBlnk = "Fail"
-        $data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
+       #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
         Write-Host "$PDNS Average Public DNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor red
     }
       
@@ -172,22 +172,22 @@ if ($domain -ne "Workgroup")
   $domainPing = Test-Connection $domain -count $pingCount -ErrorAction SilentlyContinue
   $average2 = ($domainPing.ResponseTime | Measure-Object -Average).Average
   $lost2 = $pingCount-($domainPing.count)
-  $data | Add-Member -MemberType NoteProperty -Name "Domain Name" -Value $domain -Force
+ #$data | Add-Member -MemberType NoteProperty -Name "Domain Name" -Value $domain -Force
     
     if ($domainPing)
     {
-        $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
+       #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
         Write-Host "Average Domain response time is: $average2 ms, Packet Loss $(($lost2 * 100) / $pingCount)%" -ForegroundColor DarkGray
     }
     else
     {
-        $data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
+       #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
         Write-Host "Average Domain response time is: $average2 ms, Packet Loss $(($lost2 * 100) / $pingCount)%" -ForegroundColor DarkGray
     }             
 }
 else
 {
-    $data | Add-Member -MemberType NoteProperty -Name "Domain Name" -Value "No Domain Name" -Force
+   #$data | Add-Member -MemberType NoteProperty -Name "Domain Name" -Value "No Domain Name" -Force
     Write-Host "The system is not joined to a domain" -ForegroundColor DarkGray
 }
 
@@ -200,12 +200,12 @@ foreach ($item in $PublicSites)
    $ItemIP = (Test-Connection $item -count 1 -ErrorAction SilentlyContinue).IPV4Address.IPAddressToString
    if ($ItemIP)
    {
-      $data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
+     #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
       Write-Host "DNS Resolved for $item was OK" -ForegroundColor DarkGray
    }
    else
    {
-      $data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
+     #$data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
       Write-Host "DNS Resolved for $item FAILED" -ForegroundColor red
    }
  }
@@ -221,12 +221,12 @@ foreach ($tsite in $PublicSites)
        $telnetTest = Test-NetConnection -ComputerName $tsite -Port $port -ErrorAction SilentlyContinue
        if ($telnetTest.TcpTestSucceeded -eq "True")
        {
-           $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Success" -Force
+          #$data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Success" -Force
            Write-Host "Port Connectivity test for $tsite on port $port was OK" -ForegroundColor DarkGray
        }
        else
        {
-           $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Failed" -Force
+          #$data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Failed" -Force
            Write-Host "Port Connectivity test for $tsite on port $port FAILED" -ForegroundColor red
        }
    }
@@ -279,7 +279,7 @@ if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
     $SSID = ($SSID_line -split ":")[-1].Trim()
 
     Write-Host ("The SSID is: " + $SSID ) -ForegroundColor DarkGray
-    $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Network" -Value $SSID -Force
+    #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Network" -Value $SSID -Force
 
 
     ### BSSID
@@ -329,15 +329,15 @@ if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
 
     if ($SignalPercentInt -lt 50){
         $wifisignal = "Bad"        
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
     }
     elseIf($SignalPercentInt -lt 80){
         $wifisignal = "Medium"       
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
     }
     else{
         $wifisignal = "Excellent"
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
     }
 
     # Signal (dBm)
@@ -355,15 +355,15 @@ if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
 
     if ($RecRate -lt 5){
         $wifidownspeed = "Low"        
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
     }
     elseIf($RecRate -lt 10){
         $wifidownspeed = "Medium"       
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
     }
     else{
         $wifidownspeed = "Fast"
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
     }
 
 
@@ -375,15 +375,15 @@ if ($IPDetails.InterfaceAlias -eq "Wi-Fi")
 
     if ($TransRate -lt 5){
         $wifiuploadspeed = "Low"        
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
     }
     elseIf($TransRate -lt 10){
         $wifiuploadspeed = "Medium"       
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
     }
     else{
         $wifiuploadspeed = "Fast"
-        $wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
     }
 
 
@@ -435,35 +435,35 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 
 # Analisis For ISP Download Speed
 
-$SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestobject.ISP -Force
+#$SpeedTestData | Add-Member -MemberType NoteProperty -Name "ISP" -Value $speedtestobject.ISP -Force
 
-if ($SpeedTestObject.downloadspeed -le 5)
-{
-    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Slow" -Force
-}
-   elseif ($SpeedTestObject.downloadspeed -le 10) 
-   {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Good" -Force
-   }
-
-   else 
-   {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Excellent" -Force
-   }
+#if ($SpeedTestObject.downloadspeed -le 5)
+#{
+#    #$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Slow" -Force
+#}
+#   elseif ($SpeedTestObject.downloadspeed -le 10) 
+#   {
+#        #$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Good" -Force
+#   }
+#
+#   else 
+#   {
+#        #$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Download Speed" -Value "Excellent" -Force
+#   }
 
 # Analisis For ISP Upload Speed
 
-if ($SpeedTestObject.uploadspeed -le 2){
-    $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Slow" -Force
-}
-
-    elseif ($SpeedTestObject.uploadspeed -le 5) {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Good" -Force
-    }
-
-    else {
-        $SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Excellent" -Force
-    }
+#if ($SpeedTestObject.uploadspeed -le 2){
+#    #$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Slow" -Force
+#}
+#
+#    elseif ($SpeedTestObject.uploadspeed -le 5) {
+#        #$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Good" -Force
+#    }
+#
+#    else {
+#        #$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Excellent" -Force
+#    }
 
 
 ####################################### Printing output Analisis ########################################
@@ -483,6 +483,7 @@ if ($SpeedTestObject.uploadspeed -le 2){
 #
 #Write-Host " SPEED TEST " -ForegroundColor Green
 #$SpeedTestresults  | Format-List
-#Write-Host   " Network Connectivity Tests Completed " -ForegroundColor Green
+
+Write-Host   "`nNetwork Connectivity Tests Completed " -ForegroundColor DarkGray
 
 ##########################################################################################################################################
