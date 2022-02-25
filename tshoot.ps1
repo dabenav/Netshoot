@@ -484,6 +484,6 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 #Write-Host " SPEED TEST " -ForegroundColor Green
 #$SpeedTestresults  | Format-List
 
-Write-Host   "`nNetwork Connectivity Tests Completed " -ForegroundColor DarkGray
+Write-Host   "`nNetwork Connectivity Tests Completed`n" -ForegroundColor DarkGray
 
 ##########################################################################################################################################
