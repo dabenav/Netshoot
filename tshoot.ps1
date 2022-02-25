@@ -223,12 +223,12 @@ foreach ($tsite in $PublicSites)
        if ($telnetTest.TcpTestSucceeded -eq "True")
        {
            $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Success" -Force
-           Write-Host "Port Connectivity test completed for $tsite" -ForegroundColor DarkGray
+           Write-Host "Port Connectivity test for $tsite was OK" -ForegroundColor DarkGray
        }
        else
        {
            $data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Failed" -Force
-           Write-Host "Port Connectivity test completed for $tsite" -ForegroundColor DarkGray
+           Write-Host "Port Connectivity test for $tsite FAILED" -ForegroundColor DarkGray
        }
           
    }
