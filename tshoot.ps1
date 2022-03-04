@@ -486,4 +486,9 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 
 Write-Host   "`nNetwork Connectivity Tests Completed`n" -ForegroundColor DarkGray
 
-##########################################################################################################################################
+####################################### Deleting Files ########################################
+
+Remove-Item -Path .\speedtest.zip
+Remove-Item -Path .\ts.ps1
+
+########################################### END ###############################################
