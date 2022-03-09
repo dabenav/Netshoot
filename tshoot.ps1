@@ -72,6 +72,8 @@ $pingCount = 10
 
 ########################## Get Interface Name Information ###############################
 
+Write-Host "`nCollecting Information.....`n" -ForegroundColor DarkGray
+
 foreach ($IfUpDescription in $IfUpDescriptions)
     {
     Write-Host "Interface $IfUpDescription is UP" -ForegroundColor DarkGray
@@ -85,7 +87,7 @@ foreach ($IfUpDescription in $IfUpDescriptions)
 
 if ($IPDetails.InterfaceAlias -contains "Wi-Fi")
 {  
-    Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
+    Write-Host "`nWiFi Information...`n" -ForegroundColor DarkGray
 
     #Run netsh command to get wirelss profile info
     $NetshOut = netsh.exe wlan show interfaces
@@ -236,7 +238,14 @@ if ($IPDetails.InterfaceAlias -contains "Wi-Fi")
     }
 }
 
+### Print Public IP Address 
+
+Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
+
+
 ################################# Geteway Ping Test #####################################
+
+Write-Host "`nStarting Tests...`n" -ForegroundColor DarkGray
 
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
 $average = [MATH]::Round(($con.ResponseTime | Measure-Object -Average).Average,2)
@@ -398,11 +407,6 @@ foreach ($tsite in $PublicSites)
        }
    }
 }
-
-# Print Public IP Address 
-
-Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
-
 
 
 
