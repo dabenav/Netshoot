@@ -40,16 +40,6 @@ $wifiresult = @()
 $data = New-Object -TypeName psobject
 $SpeedTestData = New-Object -TypeName psobject
 
-# Get Best Route IP Configuration details
-
-$BestRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | sort RouteMetric | Select-Object -First 1
-$DefaultIfIndex = $BestRoute.ifIndex
-$DefaultInterface = $BestRoute.InterfaceAlias
-
-$IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
-
-Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
-
 # Setting up standard variable for output as required. Do not edit these variables.
 
 $InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
@@ -73,6 +63,18 @@ $pingCount = 10
 ########################## Get Interface Name Information ###############################
 
 Write-Host "`nCollecting Information.....`n" -ForegroundColor DarkGray
+
+### Get Best Route IP Configuration details
+
+$BestRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | sort RouteMetric | Select-Object -First 1
+$DefaultIfIndex = $BestRoute.ifIndex
+$DefaultInterface = $BestRoute.InterfaceAlias
+
+$IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
+
+Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
+
+### Interfaces UP
 
 foreach ($IfUpDescription in $IfUpDescriptions)
     {
