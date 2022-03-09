@@ -83,7 +83,7 @@ foreach ($IfUpDescription in $IfUpDescriptions)
 ################################# Geteway Ping Test #####################################
 
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
-$average = ($con.ResponseTime | Measure-Object -Average).Average,2
+$average = [MATH]::Round(($con.ResponseTime | Measure-Object -Average).Average,2)
 $Minimum = ($con.ResponseTime | Measure-Object -Minimum).Minimum
 $Maximum = ($con.ResponseTime | Measure-Object -Maximum).Maximum
 $lost = $pingCount-($con.count)
@@ -114,7 +114,7 @@ foreach ($DNS in $DNSs)
 {
     $DNSPingBlnk = @()
     $con1 = Test-Connection $DNS -count $pingCount -ErrorAction SilentlyContinue
-    $average1 = ($con1.ResponseTime | Measure-Object -Average).Average,2
+    $average1 = [MATH]::Round(($con1.ResponseTime | Measure-Object -Average).Average,2)
     $Minimum1 = ($con1.ResponseTime | Measure-Object -Minimum).Minimum
     $Maximum1 = ($con1.ResponseTime | Measure-Object -Maximum).Maximum
     $lost1 = $pingCount-($con1.count)
@@ -146,7 +146,7 @@ foreach ($PDNS in $PublicDNS)
 {
     $PDNSPingBlnk = @()
     $con3 = Test-Connection $PDNS -count $pingCount -ErrorAction SilentlyContinue
-    $average3 = ($con3.ResponseTime | Measure-Object -Average).Average,2
+    $average3 = [MATH]::Round(($con3.ResponseTime | Measure-Object -Average).Average,2)
     $Minimum3 = ($con3.ResponseTime | Measure-Object -Minimum).Minimum
     $Maximum3 = ($con3.ResponseTime | Measure-Object -Maximum).Maximum
     $lost3 = $pingCount-($con3.count)
@@ -178,7 +178,7 @@ foreach ($PDNS in $PublicDNS)
 if ($domain -ne "Workgroup")
 {  
   $domainPing = Test-Connection $domain -count $pingCount -ErrorAction SilentlyContinue
-  $average2 = ($domainPing.ResponseTime | Measure-Object -Average).Average,2
+  $average2 = [MATH]::Round(($domainPing.ResponseTime | Measure-Object -Average).Average,2)
   $Minimum2 = ($domainPing.ResponseTime | Measure-Object -Minimum).Minimum
   $Maximum2 = ($domainPing.ResponseTime | Measure-Object -Maximum).Maximum
   $lost2 = $pingCount-($domainPing.count)
