@@ -80,6 +80,162 @@ foreach ($IfUpDescription in $IfUpDescriptions)
 #$data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
 
 
+####################################### WiFi Settings ########################################
+
+
+if ($IPDetails.InterfaceAlias -contains "Wi-Fi")
+{  
+    Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
+
+    #Run netsh command to get wirelss profile info
+    $NetshOut = netsh.exe wlan show interfaces
+
+    # Get time to time-stamp entry
+    $CurrentTime = Get-Date
+
+    # Name
+    $Name_line = $NetshOut | Select-String -Pattern 'Name'
+    $Name = ($Name_line -split ":")[-1].Trim()
+
+    # Description
+    $Description_line = $NetshOut | Select-String -Pattern 'Description'
+    $Description = ($Description_line -split ":")[-1].Trim()
+
+    # GUID
+    $GUID_line = $NetshOut | Select-String -Pattern 'GUID'
+    $GUID = ($GUID_line -split ":")[-1].Trim()
+
+    # Physical Address
+    $Physical_line = $NetshOut | Select-String -Pattern 'Physical'
+    $Physical = ($Physical_line -split ":", 2)[-1].Trim()
+
+    Write-Host ("The adapter mac address is: " + $Physical ) -ForegroundColor DarkGray
+
+    # State
+    $State_line = $NetshOut | Select-String -Pattern 'State'
+    $State = ($State_line -split ":")[-1].Trim()
+
+    if ($State -eq 'connected') {
+
+    ### SSID
+    $SSID_line = $NetshOut | Select-String 'SSID'| select -First 1
+    $SSID = ($SSID_line -split ":")[-1].Trim()
+
+    Write-Host ("The SSID is: " + $SSID ) -ForegroundColor DarkGray
+    #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Network" -Value $SSID -Force
+
+
+    ### BSSID
+    $BSSID_line = $NetshOut | Select-String -Pattern 'BSSID'
+    $BSSID = ($BSSID_line -split ":", 2)[-1].Trim()
+    
+    Write-Host ("The BSSID is: " + $BSSID ) -ForegroundColor DarkGray
+
+
+    ### NetworkType
+    $NetworkType_line = $NetshOut | Select-String -Pattern 'Network type'
+    $NetworkType = ($NetworkType_line -split ":")[-1].Trim()
+
+    ### RadioType
+    $RadioType_line = $NetshOut | Select-String -Pattern 'Radio type'
+    $RadioType = ($RadioType_line -split ":")[-1].Trim()
+
+    Write-Host ("The protocol is: " + $RadioType ) -ForegroundColor DarkGray
+
+
+    ### Authentication
+    $Authentication_line = $NetshOut | Select-String -Pattern 'Authentication'
+    $Authentication = ($Authentication_line -split ":")[-1].Trim()
+
+    Write-Host ("The Authentication is: " + $Authentication ) -ForegroundColor DarkGray
+
+
+    ### Cipher
+    $Cipher_line = $NetshOut | Select-String -Pattern 'Cipher'
+    $Cipher = ($Cipher_line -split ":")[-1].Trim()
+
+    ### Connection mode
+    $Connection_line = $NetshOut | Select-String -Pattern 'Connection mode'
+    $Connection = ($Connection_line -split ":")[-1].Trim()
+
+    ### Channel
+    $Channel_line = $NetshOut | Select-String -Pattern 'Channel'
+    $Channel = ($Channel_line -split ":")[-1].Trim()
+
+    Write-Host ("The Channel is: " + $Channel ) -ForegroundColor DarkGray
+
+
+    # Signal (%)
+    $SignalLevelPercent_line = $NetshOut | Select-String -Pattern 'Signal'
+    $SignalLevelPercent = ($SignalLevelPercent_line -split ":")[-1].Trim()
+    $SignalPercentInt = [int]($SignalLevelPercent -replace ".$")
+
+    if ($SignalPercentInt -lt 50){
+        $wifisignal = "Bad"        
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+    }
+    elseIf($SignalPercentInt -lt 80){
+        $wifisignal = "Medium"       
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+    }
+    else{
+        $wifisignal = "Excellent"
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
+    }
+
+    # Signal (dBm)
+    $SignalLevelPercent_trimmed = $SignalLevelPercent.TrimEnd('%')
+    $SignalLeveldBm = (([int]$SignalLevelPercent_trimmed)/2) - 100
+
+    Write-Host ("The Signal is: " +$SignalLevelPercent +" ," +$SignalLeveldBm +" dBm") -ForegroundColor DarkGray
+
+
+    ### Receive Rate
+    $RecRate_line = $NetshOut | Select-String -Pattern 'Receive rate'
+    $RecRate = [int]($RecRate_line -split ":")[-1].Trim()
+
+    Write-Host ("The Receive Rate is: " + $RecRate +" Mbps" ) -ForegroundColor DarkGray
+
+    if ($RecRate -lt 5){
+        $wifidownspeed = "Low"        
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+    }
+    elseIf($RecRate -lt 10){
+        $wifidownspeed = "Medium"       
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+    }
+    else{
+        $wifidownspeed = "Fast"
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
+    }
+
+
+    # Transmit Rate
+    $TransRate_line = $NetshOut | Select-String -Pattern 'Transmit rate'
+    $TransRate = [int]($TransRate_line -split ":")[-1].Trim()
+
+    Write-Host ("The Transmit Rate is: " + $TransRate +" Mbps" ) -ForegroundColor DarkGray
+
+    if ($TransRate -lt 5){
+        $wifiuploadspeed = "Low"        
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+    }
+    elseIf($TransRate -lt 10){
+        $wifiuploadspeed = "Medium"       
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+    }
+    else{
+        $wifiuploadspeed = "Fast"
+        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
+    }
+
+
+    # Profile
+    $Profile_line = $NetshOut | Select-String -Pattern 'Profile'
+    $Profile = ($Profile_line -split ":")[-1].Trim()
+    }
+}
+
 ################################# Geteway Ping Test #####################################
 
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
@@ -248,161 +404,6 @@ foreach ($tsite in $PublicSites)
 Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
 
 
-####################################### WiFi Settings ########################################
-
-
-if ($IPDetails.InterfaceAlias -contains "Wi-Fi")
-{  
-    Write-Host "`nWiFi Settings...`n" -ForegroundColor DarkGray
-
-    #Run netsh command to get wirelss profile info
-    $NetshOut = netsh.exe wlan show interfaces
-
-    # Get time to time-stamp entry
-    $CurrentTime = Get-Date
-
-    # Name
-    $Name_line = $NetshOut | Select-String -Pattern 'Name'
-    $Name = ($Name_line -split ":")[-1].Trim()
-
-    # Description
-    $Description_line = $NetshOut | Select-String -Pattern 'Description'
-    $Description = ($Description_line -split ":")[-1].Trim()
-
-    # GUID
-    $GUID_line = $NetshOut | Select-String -Pattern 'GUID'
-    $GUID = ($GUID_line -split ":")[-1].Trim()
-
-    # Physical Address
-    $Physical_line = $NetshOut | Select-String -Pattern 'Physical'
-    $Physical = ($Physical_line -split ":", 2)[-1].Trim()
-
-    Write-Host ("The adapter mac address is: " + $Physical ) -ForegroundColor DarkGray
-
-    # State
-    $State_line = $NetshOut | Select-String -Pattern 'State'
-    $State = ($State_line -split ":")[-1].Trim()
-
-    if ($State -eq 'connected') {
-
-    ### SSID
-    $SSID_line = $NetshOut | Select-String 'SSID'| select -First 1
-    $SSID = ($SSID_line -split ":")[-1].Trim()
-
-    Write-Host ("The SSID is: " + $SSID ) -ForegroundColor DarkGray
-    #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Network" -Value $SSID -Force
-
-
-    ### BSSID
-    $BSSID_line = $NetshOut | Select-String -Pattern 'BSSID'
-    $BSSID = ($BSSID_line -split ":", 2)[-1].Trim()
-    
-    Write-Host ("The BSSID is: " + $BSSID ) -ForegroundColor DarkGray
-
-
-    ### NetworkType
-    $NetworkType_line = $NetshOut | Select-String -Pattern 'Network type'
-    $NetworkType = ($NetworkType_line -split ":")[-1].Trim()
-
-    ### RadioType
-    $RadioType_line = $NetshOut | Select-String -Pattern 'Radio type'
-    $RadioType = ($RadioType_line -split ":")[-1].Trim()
-
-    Write-Host ("The protocol is: " + $RadioType ) -ForegroundColor DarkGray
-
-
-    ### Authentication
-    $Authentication_line = $NetshOut | Select-String -Pattern 'Authentication'
-    $Authentication = ($Authentication_line -split ":")[-1].Trim()
-
-    Write-Host ("The Authentication is: " + $Authentication ) -ForegroundColor DarkGray
-
-
-    ### Cipher
-    $Cipher_line = $NetshOut | Select-String -Pattern 'Cipher'
-    $Cipher = ($Cipher_line -split ":")[-1].Trim()
-
-    ### Connection mode
-    $Connection_line = $NetshOut | Select-String -Pattern 'Connection mode'
-    $Connection = ($Connection_line -split ":")[-1].Trim()
-
-    ### Channel
-    $Channel_line = $NetshOut | Select-String -Pattern 'Channel'
-    $Channel = ($Channel_line -split ":")[-1].Trim()
-
-    Write-Host ("The Channel is: " + $Channel ) -ForegroundColor DarkGray
-
-
-    # Signal (%)
-    $SignalLevelPercent_line = $NetshOut | Select-String -Pattern 'Signal'
-    $SignalLevelPercent = ($SignalLevelPercent_line -split ":")[-1].Trim()
-    $SignalPercentInt = [int]($SignalLevelPercent -replace ".$")
-
-    if ($SignalPercentInt -lt 50){
-        $wifisignal = "Bad"        
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
-    }
-    elseIf($SignalPercentInt -lt 80){
-        $wifisignal = "Medium"       
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
-    }
-    else{
-        $wifisignal = "Excellent"
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Signal" -Value $wifisignal -Force
-    }
-
-    # Signal (dBm)
-    $SignalLevelPercent_trimmed = $SignalLevelPercent.TrimEnd('%')
-    $SignalLeveldBm = (([int]$SignalLevelPercent_trimmed)/2) - 100
-
-    Write-Host ("The Signal is: " +$SignalLevelPercent +" ," +$SignalLeveldBm +" dBm") -ForegroundColor DarkGray
-
-
-    ### Receive Rate
-    $RecRate_line = $NetshOut | Select-String -Pattern 'Receive rate'
-    $RecRate = [int]($RecRate_line -split ":")[-1].Trim()
-
-    Write-Host ("The Receive Rate is: " + $RecRate +" Mbps" ) -ForegroundColor DarkGray
-
-    if ($RecRate -lt 5){
-        $wifidownspeed = "Low"        
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
-    }
-    elseIf($RecRate -lt 10){
-        $wifidownspeed = "Medium"       
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
-    }
-    else{
-        $wifidownspeed = "Fast"
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Download Speed" -Value $wifidownspeed -Force
-    }
-
-
-    # Transmit Rate
-    $TransRate_line = $NetshOut | Select-String -Pattern 'Transmit rate'
-    $TransRate = [int]($TransRate_line -split ":")[-1].Trim()
-
-    Write-Host ("The Transmit Rate is: " + $TransRate +" Mbps" ) -ForegroundColor DarkGray
-
-    if ($TransRate -lt 5){
-        $wifiuploadspeed = "Low"        
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
-    }
-    elseIf($TransRate -lt 10){
-        $wifiuploadspeed = "Medium"       
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
-    }
-    else{
-        $wifiuploadspeed = "Fast"
-        #$wifidata | Add-Member -MemberType NoteProperty -Name "WiFi Upload Speed" -Value $wifiuploadspeed -Force
-    }
-
-
-    # Profile
-    $Profile_line = $NetshOut | Select-String -Pattern 'Profile'
-    $Profile = ($Profile_line -split ":")[-1].Trim()
-    }
-}
 
 
 ####################################### Speed Test #######################################
