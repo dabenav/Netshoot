@@ -57,7 +57,7 @@ $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.
 
 $PublicDNS = "8.8.8.8", "1.1.1.1"
 $PublicSites = "cisco.com", "ibm.com"
-$pingCount = 10
+$pingCount = 2
 
 
 ########################## Get Interface Name Information ###############################
@@ -82,6 +82,11 @@ foreach ($IfUpDescription in $IfUpDescriptions)
     }
 
 #$data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
+
+
+### Print Public IP Address 
+
+Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
 
 
 ####################################### WiFi Settings ########################################
@@ -240,9 +245,6 @@ if ($IPDetails.InterfaceAlias -contains "Wi-Fi")
     }
 }
 
-### Print Public IP Address 
-
-Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
 
 
 ################################# Geteway Ping Test #####################################
@@ -272,7 +274,7 @@ else
 {
     $GetewayPingStatus = "Fail"
    #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Default Gateway response FAILED" -ForegroundColor red
+    Write-Host "Default Gateway $Geteway response FAILED" -ForegroundColor red
 }
 
 # Test DNS Connectivity
@@ -303,7 +305,7 @@ foreach ($DNS in $DNSs)
     {
         $DNSPingBlnk = "Fail"
         #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Host DNS server FAILED" -ForegroundColor red 
+        Write-Host "Host DNS $DNS server FAILED" -ForegroundColor red 
     }
 }
 
@@ -335,7 +337,7 @@ foreach ($PDNS in $PublicDNS)
     {
         $PDNSPingBlnk = "Fail"
        #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS Public DNS response FAILED" -ForegroundColor red
+        Write-Host "$PDNS Public DNS $PDNS response FAILED" -ForegroundColor red
     }
       
 }
