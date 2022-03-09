@@ -84,26 +84,28 @@ foreach ($IfUpDescription in $IfUpDescriptions)
 
 $con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
 $average = ($con.ResponseTime | Measure-Object -Average).Average
+$Minimum = ($con.ResponseTime | Measure-Object -Minimum).Minimum
+$Maximum = ($con.ResponseTime | Measure-Object -Maximum).Maximum
 $lost = $pingCount-($con.count)
-
+$lostpercentage = ($lost * 100) / $pingCount
 
 if ($lost -eq 0 )
 {
     $GetewayPingStatus = "Excelent"   
    #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
+    Write-Host "Default Gateway $Geteway response time Min/Avg/Max = $Minimum/$average/$Maximum ms, Packet Loss $lostpercentage%" -ForegroundColor DarkGray
 }
 elseIf($lost -lt $pingCount -and $lost -gt 0)
 {
     $GetewayPingStatus = "Poor"    
    #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor DarkGray
+    Write-Host "Default Gateway $Geteway response time Min/Avg/Max: $Minimum / $average / $Maximum ms, Packet Loss $lostpercentage%" -ForegroundColor DarkGray
 }
 else
 {
     $GetewayPingStatus = "Fail"
    #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Average Default Gateway response is: $average ms, Packet Loss $(($lost * 100) / $pingCount)%" -ForegroundColor red
+    Write-Host "Default Gateway response FAILED" -ForegroundColor red
 }
 
 # Test DNS Connectivity
@@ -113,25 +115,28 @@ foreach ($DNS in $DNSs)
     $DNSPingBlnk = @()
     $con1 = Test-Connection $DNS -count $pingCount -ErrorAction SilentlyContinue
     $average1 = ($con1.ResponseTime | Measure-Object -Average).Average
+    $Minimum1 = ($con1.ResponseTime | Measure-Object -Minimum).Minimum
+    $Maximum1 = ($con1.ResponseTime | Measure-Object -Maximum).Maximum
     $lost1 = $pingCount-($con1.count)
+    $lostpercentage1 = ($lost1 * 100) / $pingCount
 
     if ($lost1 -eq 0 )
     {
         $DNSPingBlnk = "Excelent"        
         #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray 
     }
     elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
     {
         $DNSPingBlnk = "Poor"       
         #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor DarkGray 
+        Write-Host "Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray 
     }
     else
     {
         $DNSPingBlnk = "Fail"
         #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Average Host DNS server $DNS response is: $average1 ms, Packet Loss $(($lost1 * 100) / $pingCount)%" -ForegroundColor red 
+        Write-Host "Host DNS server FAILED" -ForegroundColor red 
     }
 }
 
@@ -142,25 +147,28 @@ foreach ($PDNS in $PublicDNS)
     $PDNSPingBlnk = @()
     $con3 = Test-Connection $PDNS -count $pingCount -ErrorAction SilentlyContinue
     $average3 = ($con3.ResponseTime | Measure-Object -Average).Average
+    $Minimum3 = ($con3.ResponseTime | Measure-Object -Minimum).Minimum
+    $Maximum3 = ($con3.ResponseTime | Measure-Object -Maximum).Maximum
     $lost3 = $pingCount-($con3.count)
+    $lostpercentage3 = ($lost3 * 100) / $pingCount
 
     if ($lost3 -eq 0 )
     {
         $PDNSPingBlnk = "Excelent"        
        #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "Average Public DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
+        Write-Host "Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
     }
     elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
     {
         $PDNSPingBlnk = "Poor"       
        #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "Average Public DNS server $PDNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor DarkGray
+        Write-Host "Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
     }
     else
     {
         $PDNSPingBlnk = "Fail"
        #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS Average Public DNS response time is: $average3 ms, Packet Loss $(($lost3 * 100) / $pingCount)%" -ForegroundColor red
+        Write-Host "$PDNS Public DNS response FAILED" -ForegroundColor red
     }
       
 }
@@ -171,18 +179,21 @@ if ($domain -ne "Workgroup")
 {  
   $domainPing = Test-Connection $domain -count $pingCount -ErrorAction SilentlyContinue
   $average2 = ($domainPing.ResponseTime | Measure-Object -Average).Average
+  $Minimum2 = ($domainPing.ResponseTime | Measure-Object -Minimum).Minimum
+  $Maximum2 = ($domainPing.ResponseTime | Measure-Object -Maximum).Maximum
   $lost2 = $pingCount-($domainPing.count)
+  $lostpercentage2 = ($lost2 * 100) / $pingCount
  #$data | Add-Member -MemberType NoteProperty -Name "Domain Name" -Value $domain -Force
     
     if ($domainPing)
     {
        #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
-        Write-Host "Average Domain response time is: $average2 ms, Packet Loss $(($lost2 * 100) / $pingCount)%" -ForegroundColor DarkGray
+        Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkGray
     }
     else
     {
        #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
-        Write-Host "Average Domain response time is: $average2 ms, Packet Loss $(($lost2 * 100) / $pingCount)%" -ForegroundColor DarkGray
+        Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkGray
     }             
 }
 else
