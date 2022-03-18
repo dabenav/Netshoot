@@ -4,7 +4,7 @@
 #  By: Daniel Benavides
 ####################################################################################################################
 
-Write-Host "`nStarting Network Connectivity test.....`n" -ForegroundColor DarkGray
+Write-Host "`nStarting Network Connectivity test....." -ForegroundColor DarkGray
 
 $result = $null
 $data = $null
@@ -42,6 +42,8 @@ $SpeedTestData = New-Object -TypeName psobject
 
 # Setting up standard variable for output as required. Do not edit these variables.
 
+$IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
+
 $InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
 $IfUpDescriptions = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceDescription
 $counter = 1
@@ -69,8 +71,6 @@ Write-Host "`nCollecting Information.....`n" -ForegroundColor DarkGray
 $BestRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | sort RouteMetric | Select-Object -First 1
 $DefaultIfIndex = $BestRoute.ifIndex
 $DefaultInterface = $BestRoute.InterfaceAlias
-
-$IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
 
 Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
 
