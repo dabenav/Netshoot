@@ -40,21 +40,6 @@ $wifiresult = @()
 $data = New-Object -TypeName psobject
 $SpeedTestData = New-Object -TypeName psobject
 
-# Setting up standard variable for output as required. Do not edit these variables.
-
-$IPDetails = $null
-$IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
-
-$InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
-$IfUpDescriptions = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceDescription
-$counter = 1
-$IP = $IPDetails.IPv4Address.IPAddress
-$Geteway = $IPDetails.IPv4DefaultGateway.NextHop
-$DNSServers = $IPDetails.DNSServer | Where-Object {$_.AddressFamily -eq '2'}
-$DNSs = $DNSServers.ServerAddresses
-$domain = (Get-WmiObject win32_computersystem).Domain
-$PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.220).IPAddress
-
 
 ########################## Edit these variables as needed ###############################
 
@@ -74,6 +59,22 @@ $DefaultIfIndex = $BestRoute.ifIndex
 $DefaultInterface = $BestRoute.InterfaceAlias
 
 Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
+
+# Setting up standard variable for output as required. Do not edit these variables.
+
+$IPDetails = $null
+$IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
+
+$InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
+$IfUpDescriptions = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceDescription
+$counter = 1
+$IP = $IPDetails.IPv4Address.IPAddress
+$Geteway = $IPDetails.IPv4DefaultGateway.NextHop
+$DNSServers = $IPDetails.DNSServer | Where-Object {$_.AddressFamily -eq '2'}
+$DNSs = $DNSServers.ServerAddresses
+$domain = (Get-WmiObject win32_computersystem).Domain
+$PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.220).IPAddress
+
 
 ### Interfaces UP
 
