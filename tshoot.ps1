@@ -42,6 +42,7 @@ $SpeedTestData = New-Object -TypeName psobject
 
 # Setting up standard variable for output as required. Do not edit these variables.
 
+$IPDetails = $null
 $IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
 
 $InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
