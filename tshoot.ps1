@@ -409,11 +409,12 @@ else
 foreach ($item in $PublicSites)
 {
    $ItemIP = Resolve-DnsName $item -ErrorAction SilentlyContinue
+   $firstArecord = $ItemIP.IPAddress[1]
    
    if (![string]::IsNullOrWhiteSpace($ItemIP))
    {
      #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
-      Write-Host "DNS Resolved for $item was OK" -ForegroundColor DarkGray
+      Write-Host "DNS Resolved for $item $firstArecord was OK" -ForegroundColor DarkGray
    }
    else
    {
@@ -421,6 +422,7 @@ foreach ($item in $PublicSites)
       Write-Host "DNS Resolved for $item FAILED" -ForegroundColor red
    }
  }
+
  
  
 # Telnet Test to public Sites on port 80 and 443
