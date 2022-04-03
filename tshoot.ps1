@@ -315,7 +315,7 @@ foreach ($DNS in $DNSs)
     $lost1 = $pingCount-($con1.count)
     $lostpercentage1 = ($lost1 * 100) / $pingCount
     
-    Write-Host "Ping DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray
+    Write-Host "Ping test Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray
 
     #if ($lost1 -eq 0 )
     #{
@@ -349,7 +349,7 @@ foreach ($PDNS in $PublicDNS)
     $lost3 = $pingCount-($con3.count)
     $lostpercentage3 = ($lost3 * 100) / $pingCount
     
-    Write-Host "Ping DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
+    Write-Host "Ping test Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
 
     #if ($lost3 -eq 0 )
     #{
