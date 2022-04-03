@@ -420,10 +420,12 @@ foreach ($tsite in $PublicSites)
 
 Write-Host "`nRunning Speed Test...`n" -ForegroundColor DarkGray
 
-$Speedtesturi = Invoke-WebRequest -Uri "https://www.speedtest.net/apps/cli" -UseBasicParsing
-$downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download for Windows*"}
-Invoke-WebRequest -Uri $downloaduri.href -OutFile ".\speedtest.zip" 
-Expand-Archive -Path ".\speedtest.zip" -DestinationPath ".\" -Force
+#$Speedtesturi = Invoke-WebRequest -Uri "https://www.speedtest.net/apps/cli" -UseBasicParsing
+#$downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download for Windows*"}
+#Invoke-WebRequest -Uri $downloaduri.href -OutFile ".\speedtest.zip" 
+Invoke-WebRequest -Uri https://bit.ly/3K8hhBX -OutFile ".\speedtest.exe"
+Invoke-WebRequest -Uri https://bit.ly/3LEBY96 -OutFile ".\speedtest.md"
+#Expand-Archive -Path ".\speedtest.zip" -DestinationPath ".\" -Force
 
 $SpeedTestResult = &".\speedtest.exe" --accept-license --format=json | ConvertFrom-Json
 
@@ -487,6 +489,12 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 #        #$SpeedTestData | Add-Member -MemberType NoteProperty -Name "Internet Upload Speed" -Value "Excellent" -Force
 #    }
 
+####################################### Deleting Files ########################################
+
+#Remove-Item -Path .\speedtest.zip
+Remove-Item -Path .\speedtest.exe
+Remove-Item -Path .\speedtest.md
+Remove-Item -Path .\ts.ps1
 
 ####################################### Printing output Analisis ########################################
 
@@ -506,11 +514,8 @@ Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColo
 #Write-Host " SPEED TEST " -ForegroundColor Green
 #$SpeedTestresults  | Format-List
 
+
 Write-Host   "`nNetwork Connectivity Tests Completed`n" -ForegroundColor DarkGray
 
-####################################### Deleting Files ########################################
-
-Remove-Item -Path .\speedtest.zip
-Remove-Item -Path .\ts.ps1
 
 ########################################### END ###############################################
