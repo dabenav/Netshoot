@@ -423,8 +423,8 @@ Write-Host "`nRunning Speed Test...`n" -ForegroundColor DarkGray
 #$Speedtesturi = Invoke-WebRequest -Uri "https://www.speedtest.net/apps/cli" -UseBasicParsing
 #$downloaduri = $Speedtesturi.Links | Where-Object {$_.outerHTML -like "*Download for Windows*"}
 #Invoke-WebRequest -Uri $downloaduri.href -OutFile ".\speedtest.zip" 
-Invoke-WebRequest -Uri https://bit.ly/3K8hhBX -OutFile ".\speedtest.exe"
-Invoke-WebRequest -Uri https://bit.ly/3LEBY96 -OutFile ".\speedtest.md"
+Invoke-WebRequest -Uri https://github.com/dabenav/Netshoot/raw/main/speedtest.exe -OutFile ".\speedtest.exe"
+Invoke-WebRequest -Uri https://github.com/dabenav/Netshoot/raw/main/speedtest.md -OutFile ".\speedtest.md"
 #Expand-Archive -Path ".\speedtest.zip" -DestinationPath ".\" -Force
 
 $SpeedTestResult = &".\speedtest.exe" --accept-license --format=json | ConvertFrom-Json
