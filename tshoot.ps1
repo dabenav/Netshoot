@@ -416,12 +416,12 @@ foreach ($DNS in $DNSs)
         if (![string]::IsNullOrWhiteSpace($ItemIP))
         {
             #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
-            Write-Host "DNS Resolved test with $DNS for $item $firstArecord was OK" -ForegroundColor DarkGray
+            Write-Host "DNS Resolver test for $DNS, $item $firstArecord was OK" -ForegroundColor DarkGray
         }
         else
         {
             #$data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
-            Write-Host "DNS Resolved test for $DNS FAILED" -ForegroundColor red
+            Write-Host "DNS Resolver test for $DNS FAILED" -ForegroundColor red
         }
     }
  }
