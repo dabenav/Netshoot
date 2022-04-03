@@ -44,7 +44,7 @@ $SpeedTestData = New-Object -TypeName psobject
 ########################## Edit these variables as needed ###############################
 
 $PublicDNS = "8.8.8.8"
-$PublicSites = "google.com"
+$PublicSites = "cisco.com"
 $pingCount = 8
 
 
@@ -408,8 +408,9 @@ else
 
 foreach ($item in $PublicSites)
 {
-   $ItemIP = (Test-Connection $item -count 1 -ErrorAction SilentlyContinue).IPV4Address.IPAddressToString
-   if ($ItemIP)
+   $ItemIP = Resolve-DnsName $item -ErrorAction SilentlyContinue
+   
+   if (![string]::IsNullOrWhiteSpace($ItemIP))
    {
      #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
       Write-Host "DNS Resolved for $item was OK" -ForegroundColor DarkGray
@@ -420,6 +421,7 @@ foreach ($item in $PublicSites)
       Write-Host "DNS Resolved for $item FAILED" -ForegroundColor red
    }
  }
+ 
  
 # Telnet Test to public Sites on port 80 and 443
 
