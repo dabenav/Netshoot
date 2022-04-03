@@ -404,28 +404,30 @@ else
 
 
 
-# DNS Resolution for public sites
+# DNS Resolution test
 
-foreach ($item in $PublicSites)
+foreach ($DNS in $DNSs)
 {
-   $ItemIP = Resolve-DnsName $item -ErrorAction SilentlyContinue
-   $firstArecord = $ItemIP.IPAddress[1]
+    foreach ($item in $PublicSites)
+    {
+        $ItemIP = Resolve-DnsName $item -Server $DNS -ErrorAction SilentlyContinue
+        $firstArecord = $ItemIP.IPAddress[1]
    
-   if (![string]::IsNullOrWhiteSpace($ItemIP))
-   {
-     #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
-      Write-Host "DNS Resolved for $item $firstArecord was OK" -ForegroundColor DarkGray
-   }
-   else
-   {
-     #$data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
-      Write-Host "DNS Resolved for $item FAILED" -ForegroundColor red
-   }
+        if (![string]::IsNullOrWhiteSpace($ItemIP))
+        {
+            #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
+            Write-Host "DNS Resolved with $DNS for $item $firstArecord was OK" -ForegroundColor DarkGray
+        }
+        else
+        {
+            #$data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
+            Write-Host "DNS Resolved for $item FAILED" -ForegroundColor red
+        }
+    }
  }
-
  
  
-# Telnet Test to public Sites on port 80 and 443
+# Port test to public Sites on port 80 and 443
 
 foreach ($tsite in $PublicSites)
 {
