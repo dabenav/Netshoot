@@ -315,7 +315,7 @@ foreach ($DNS in $DNSs)
     $lost1 = $pingCount-($con1.count)
     $lostpercentage1 = ($lost1 * 100) / $pingCount
     
-    Write-Host "Ping test Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray
+    Write-Host "Ping test to Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray
 
     #if ($lost1 -eq 0 )
     #{
@@ -349,7 +349,7 @@ foreach ($PDNS in $PublicDNS)
     $lost3 = $pingCount-($con3.count)
     $lostpercentage3 = ($lost3 * 100) / $pingCount
     
-    Write-Host "Ping test Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
+    Write-Host "Ping test to Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
 
     #if ($lost3 -eq 0 )
     #{
@@ -416,12 +416,12 @@ foreach ($DNS in $DNSs)
         if (![string]::IsNullOrWhiteSpace($ItemIP))
         {
             #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
-            Write-Host "DNS Resolved with $DNS for $item $firstArecord was OK" -ForegroundColor DarkGray
+            Write-Host "DNS Resolved test with $DNS for $item $firstArecord was OK" -ForegroundColor DarkGray
         }
         else
         {
             #$data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
-            Write-Host "DNS Resolved for $item FAILED" -ForegroundColor red
+            Write-Host "DNS Resolved test for $DNS FAILED" -ForegroundColor red
         }
     }
  }
