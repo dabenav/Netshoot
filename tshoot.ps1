@@ -43,9 +43,9 @@ $SpeedTestData = New-Object -TypeName psobject
 
 ########################## Edit these variables as needed ###############################
 
-$PublicDNS = "8.8.8.8", "1.1.1.1"
-$PublicSites = "cisco.com", "ibm.com"
-$pingCount = 10
+$PublicDNS = "8.8.8.8"
+$PublicSites = "google.com"
+$pingCount = 8
 
 
 ########################## Get Interface Name Information ###############################
@@ -249,35 +249,59 @@ if ($IPDetails.InterfaceAlias -contains "Wi-Fi")
 
 
 
-################################# Geteway Ping Test #####################################
+################################# Tests #####################################
 
 Write-Host "`nStarting Tests...`n" -ForegroundColor DarkGray
 
-$con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
-$average = [MATH]::Round(($con.ResponseTime | Measure-Object -Average).Average,2)
-$Minimum = ($con.ResponseTime | Measure-Object -Minimum).Minimum
-$Maximum = ($con.ResponseTime | Measure-Object -Maximum).Maximum
-$lost = $pingCount-($con.count)
-$lostpercentage = ($lost * 100) / $pingCount
+# Traceroute ping test
 
-if ($lost -eq 0 )
+$TraceRouteTest = Test-NetConnection 8.8.8.8 -TraceRoute -Hops 3 -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+$TraceRouteHops = $TraceRouteTest.TraceRoute
+$hop = 0
+
+if (![string]::IsNullOrWhiteSpace($Geteway))
 {
-    $GetewayPingStatus = "Excelent"   
-   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Default Gateway $Geteway response time Min/Avg/Max = $Minimum/$average/$Maximum ms, Packet Loss $lostpercentage%" -ForegroundColor DarkGray
+    foreach ($TraceHop in $TraceRouteHops)
+    {
+        $PingtestHop = Test-Connection $TraceHop -count $pingCount -ErrorAction SilentlyContinue
+        $average5 = [MATH]::Round(($PingtestHop.ResponseTime | Measure-Object -Average).Average,2)
+        $Minimum5 = ($PingtestHop.ResponseTime | Measure-Object -Minimum).Minimum
+        $Maximum5 = ($PingtestHop.ResponseTime | Measure-Object -Maximum).Maximum
+        $lost5 = $pingCount-($PingtestHop.count)
+        $lostpercentage5 = ($lost5 * 100) / $pingCount
+        $hop++
+
+        Write-Host "Ping test hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkGray
+    }
 }
-elseIf($lost -lt $pingCount -and $lost -gt 0)
-{
-    $GetewayPingStatus = "Poor"    
-   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Default Gateway $Geteway response time Min/Avg/Max: $Minimum / $average / $Maximum ms, Packet Loss $lostpercentage%" -ForegroundColor DarkGray
-}
-else
-{
-    $GetewayPingStatus = "Fail"
-   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-    Write-Host "Default Gateway $Geteway response FAILED" -ForegroundColor red
-}
+
+# Default Gateway connectivity test
+
+#$con = Test-Connection $Geteway -count $pingCount -ErrorAction SilentlyContinue
+#$average = [MATH]::Round(($con.ResponseTime | Measure-Object -Average).Average,2)
+#$Minimum = ($con.ResponseTime | Measure-Object -Minimum).Minimum
+#$Maximum = ($con.ResponseTime | Measure-Object -Maximum).Maximum
+#$lost = $pingCount-($con.count)
+#$lostpercentage = ($lost * 100) / $pingCount
+#
+#if ($lost -eq 0 )
+#{
+#    $GetewayPingStatus = "Excelent"   
+#   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
+#    Write-Host "Default Gateway $Geteway response time Min/Avg/Max = $Minimum/$average/$Maximum ms, Packet Loss $lostpercentage%" -ForegroundColor DarkGray
+#}
+#elseIf($lost -lt $pingCount -and $lost -gt 0)
+#{
+#    $GetewayPingStatus = "Poor"    
+#   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
+#    Write-Host "Default Gateway $Geteway response time Min/Avg/Max: $Minimum / $average / $Maximum ms, Packet Loss $lostpercentage%" -ForegroundColor DarkGray
+#}
+#else
+#{
+#    $GetewayPingStatus = "Fail"
+#   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
+#    Write-Host "Default Gateway $Geteway response FAILED" -ForegroundColor red
+#}
 
 # Test DNS Connectivity
 
@@ -290,25 +314,27 @@ foreach ($DNS in $DNSs)
     $Maximum1 = ($con1.ResponseTime | Measure-Object -Maximum).Maximum
     $lost1 = $pingCount-($con1.count)
     $lostpercentage1 = ($lost1 * 100) / $pingCount
+    
+    Write-Host "Ping DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray
 
-    if ($lost1 -eq 0 )
-    {
-        $DNSPingBlnk = "Excelent"        
-        #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray 
-    }
-    elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
-    {
-        $DNSPingBlnk = "Poor"       
-        #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray 
-    }
-    else
-    {
-        $DNSPingBlnk = "Fail"
-        #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-        Write-Host "Host DNS $DNS server FAILED" -ForegroundColor red 
-    }
+    #if ($lost1 -eq 0 )
+    #{
+    #    $DNSPingBlnk = "Excelent"        
+    #    #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
+    #    Write-Host "Ping DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray 
+    #}
+    #elseIf($lost1 -lt $pingCount -and $lost1 -gt 0)
+    #{
+    #    $DNSPingBlnk = "Poor"       
+    #    #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
+    #    Write-Host "Ping DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray 
+    #}
+    #else
+    #{
+    #    $DNSPingBlnk = "Fail"
+    #    #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
+    #    Write-Host "Ping DNS $DNS server FAILED" -ForegroundColor red 
+    #}
 }
 
 # Public DNS Status
@@ -322,48 +348,30 @@ foreach ($PDNS in $PublicDNS)
     $Maximum3 = ($con3.ResponseTime | Measure-Object -Maximum).Maximum
     $lost3 = $pingCount-($con3.count)
     $lostpercentage3 = ($lost3 * 100) / $pingCount
+    
+    Write-Host "Ping DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
 
-    if ($lost3 -eq 0 )
-    {
-        $PDNSPingBlnk = "Excelent"        
-       #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
-    }
-    elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
-    {
-        $PDNSPingBlnk = "Poor"       
-       #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
-    }
-    else
-    {
-        $PDNSPingBlnk = "Fail"
-       #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-        Write-Host "$PDNS Public DNS $PDNS response FAILED" -ForegroundColor red
-    }
+    #if ($lost3 -eq 0 )
+    #{
+    #    #$PDNSPingBlnk = "Excelent"        
+    #    #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
+    #    Write-Host "Ping DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
+    #}
+    #elseIf($lost3 -lt $pingCount -and $lost3 -gt 0)
+    #{
+    #    #$PDNSPingBlnk = "Poor"       
+    #    #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
+    #    Write-Host "Ping DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
+    #}
+    #else
+    #{
+    #    #$PDNSPingBlnk = "Fail"
+    #    #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
+    #    Write-Host "Ping DNS server $PDNS Public DNS $PDNS response FAILED" -ForegroundColor red
+    #}
       
 }
 
-# Public Traceroute first 3 hops ping test
-
-$TraceRouteTest = Test-NetConnection 8.8.8.8 -TraceRoute -Hops 3 -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
-$TraceRouteHops = $TraceRouteTest.TraceRoute
-
-if (![string]::IsNullOrWhiteSpace($Geteway))
-    {
-    foreach ($TraceHop in $TraceRouteHops)
-        {
-        $PingtestHop = Test-Connection $TraceHop -count $pingCount -ErrorAction SilentlyContinue
-        $average5 = [MATH]::Round(($PingtestHop.ResponseTime | Measure-Object -Average).Average,2)
-        $Minimum5 = ($PingtestHop.ResponseTime | Measure-Object -Minimum).Minimum
-        $Maximum5 = ($PingtestHop.ResponseTime | Measure-Object -Maximum).Maximum
-        $lost5 = $pingCount-($PingtestHop.count)
-        $lostpercentage5 = ($lost5 * 100) / $pingCount
-
-        Write-Host "Traceroute hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkGray
-
-        }
-    }
 
 # Local Domain Joined Status
 
