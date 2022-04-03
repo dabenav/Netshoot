@@ -344,6 +344,27 @@ foreach ($PDNS in $PublicDNS)
       
 }
 
+# Public Traceroute first 3 hops ping test
+
+$TraceRouteTest = Test-NetConnection 8.8.8.8 -TraceRoute -Hops 3 -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+$TraceRouteHops = $TraceRouteTest.TraceRoute
+
+if (![string]::IsNullOrWhiteSpace($Geteway))
+    {
+    foreach ($TraceHop in $TraceRouteHops)
+        {
+        $PingtestHop = Test-Connection $TraceHop -count $pingCount -ErrorAction SilentlyContinue
+        $average5 = [MATH]::Round(($PingtestHop.ResponseTime | Measure-Object -Average).Average,2)
+        $Minimum5 = ($PingtestHop.ResponseTime | Measure-Object -Minimum).Minimum
+        $Maximum5 = ($PingtestHop.ResponseTime | Measure-Object -Maximum).Maximum
+        $lost5 = $pingCount-($PingtestHop.count)
+        $lostpercentage5 = ($lost5 * 100) / $pingCount
+
+        Write-Host "Traceroute hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkGray
+
+        }
+    }
+
 # Local Domain Joined Status
 
 if ($domain -ne "Workgroup")
