@@ -94,7 +94,7 @@ Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGra
 ####################################### WiFi Settings ########################################
 
 
-if ($IPDetails.InterfaceAlias -contains "Wi-Fi")
+if ($IPDetails.InterfaceAlias -like '*Wi-Fi*')
 {  
     Write-Host "`nWiFi Information...`n" -ForegroundColor DarkGray
 
