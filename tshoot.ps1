@@ -416,7 +416,7 @@ foreach ($DNS in $DNSs)
         if (![string]::IsNullOrWhiteSpace($ItemIP))
         {
             #$data | Add-Member -MemberType NoteProperty -Name "DNS Resolved $item" -Value "Success" -Force
-            Write-Host "DNS Resolver test for $DNS, $item $firstArecord was OK" -ForegroundColor DarkGray
+            Write-Host "DNS Resolver test for $DNS, $item $firstArecord - OK" -ForegroundColor DarkGray
         }
         else
         {
@@ -439,7 +439,7 @@ foreach ($tsite in $PublicSites)
        if ($telnetTest.TcpTestSucceeded -eq "True")
        {
           #$data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Success" -Force
-           Write-Host "Port Connectivity test for $tsite on port $port was OK" -ForegroundColor DarkGray
+           Write-Host "Port Connectivity test for $tsite on port $port - OK" -ForegroundColor DarkGray
        }
        else
        {
