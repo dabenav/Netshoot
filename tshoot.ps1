@@ -277,7 +277,15 @@ if (![string]::IsNullOrWhiteSpace($Geteway))
         $lostpercentage5 = ($lost5 * 100) / $pingCount
         $hop++
 
-        Write-Host "Ping test hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkGray
+        if ( $lost5 -eq 0 )
+        {
+            Write-Host "Ping test hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkGray
+        }
+        else
+        {
+            Write-Host "Ping test hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkRed
+        }
+        
     }
 }
 
@@ -306,7 +314,7 @@ if (![string]::IsNullOrWhiteSpace($Geteway))
 #{
 #    $GetewayPingStatus = "Fail"
 #   #$data | Add-Member -MemberType NoteProperty -Name GetewayPing -Value $GetewayPingStatus -Force
-#    Write-Host "Default Gateway $Geteway response FAILED" -ForegroundColor red
+#    Write-Host "Default Gateway $Geteway response FAILED" -ForegroundColor DarkRed
 #}
 
 # Test DNS Connectivity
@@ -321,7 +329,16 @@ foreach ($DNS in $DNSs)
     $lost1 = $pingCount-($con1.count)
     $lostpercentage1 = ($lost1 * 100) / $pingCount
     
-    Write-Host "Ping test to Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray
+    if ( $lost1 -eq 0 )
+    {
+        Write-Host "Ping test to Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkGray
+    }
+    else
+    {
+        Write-Host "Ping test to Host DNS server $DNS response time Min/Avg/Max = $Minimum1/$average1/$Maximum1 ms, Packet Loss $lostpercentage1%" -ForegroundColor DarkRed
+    }
+
+    
 
     #if ($lost1 -eq 0 )
     #{
@@ -339,7 +356,7 @@ foreach ($DNS in $DNSs)
     #{
     #    $DNSPingBlnk = "Fail"
     #    #$data  | Add-Member -MemberType NoteProperty -Name "System DNS $DNS" -Value $DNSPingBlnk -Force
-    #    Write-Host "Ping DNS $DNS server FAILED" -ForegroundColor red 
+    #    Write-Host "Ping DNS $DNS server FAILED" -ForegroundColor DarkRed 
     #}
 }
 
@@ -355,7 +372,17 @@ foreach ($PDNS in $PublicDNS)
     $lost3 = $pingCount-($con3.count)
     $lostpercentage3 = ($lost3 * 100) / $pingCount
     
-    Write-Host "Ping test to Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
+    
+    if ( $lost1 -eq 0 )
+    {
+        Write-Host "Ping test to Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkGray
+    }
+    else
+    {
+        Write-Host "Ping test to Public DNS server $PDNS response time Min/Avg/Max = $Minimum3/$average3/$Maximum3 ms, Packet Loss $lostpercentage3%" -ForegroundColor DarkRed
+    }
+    
+    
 
     #if ($lost3 -eq 0 )
     #{
@@ -373,7 +400,7 @@ foreach ($PDNS in $PublicDNS)
     #{
     #    #$PDNSPingBlnk = "Fail"
     #    #$data | Add-Member -MemberType NoteProperty -Name "Public DNS $PDNS" -Value $PDNSPingBlnk -Force
-    #    Write-Host "Ping DNS server $PDNS Public DNS $PDNS response FAILED" -ForegroundColor red
+    #    Write-Host "Ping DNS server $PDNS Public DNS $PDNS response FAILED" -ForegroundColor DarkRed
     #}
       
 }
@@ -393,19 +420,27 @@ if ($domain -ne "Workgroup")
     
     if ($domainPing)
     {
-       #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
-        Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkGray
+        #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
+        if ( $lost2 -eq 0 )
+        {
+            Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkGray
+        }
+        else
+        {
+            Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkRed
+        }
+        
     }
     else
     {
-       #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
-        Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkGray
+        #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
+        Write-Host "Domain Controller Unreachable -ForegroundColor DarkRed"
     }             
 }
 else
 {
    #$data | Add-Member -MemberType NoteProperty -Name "Domain Name" -Value "No Domain Name" -Force
-    Write-Host "The system is not joined to a domain" -ForegroundColor DarkGray
+    Write-Host "The system is not joined to a domain" -ForegroundColor DarkRed
 }
 
 
@@ -427,7 +462,7 @@ foreach ($DNS in $DNSs)
         else
         {
             #$data | Add-Member -MemberType NoteProperty -Name  "DNS $data"  -Value "Failed" -Force
-            Write-Host "DNS Resolver test for $DNS FAILED" -ForegroundColor red
+            Write-Host "DNS Resolver test for $DNS FAILED" -ForegroundColor DarkRed
         }
     }
  }
@@ -450,7 +485,7 @@ foreach ($tsite in $PublicSites)
        else
        {
           #$data | Add-Member -MemberType NoteProperty -Name "$tsite : $port" -Value "Failed" -Force
-           Write-Host "Port Connectivity test for $tsite on port $port FAILED" -ForegroundColor red
+           Write-Host "Port Connectivity test for $tsite on port $port FAILED" -ForegroundColor DarkRed
        }
    }
 }
@@ -496,7 +531,7 @@ Write-Host ("The Latency is: " + $SpeedTestObject.latency + " ms") -ForegroundCo
 Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColor DarkGray
 
 
-# Analisis of the Speed Test 
+### Analisis of the Speed Test 
 
 # Analisis For ISP Download Speed
 
