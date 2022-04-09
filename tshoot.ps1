@@ -78,9 +78,15 @@ $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.
 
 ### Interfaces UP
 
-foreach ($IfUpDescription in $IfUpDescriptions)
+foreach ($InterfaceUp in $InterfacesUp)
     {
-    Write-Host "Interface $IfUpDescription is UP" -ForegroundColor DarkGray
+    $IfUpDetails = Get-NetIPConfiguration -InterfaceAlias $InterfaceUp
+    $IfUpPrefixOrigin = $IfUpDetails.IPv4Address.PrefixOrigin
+    $IfUpIPAddress = $IfUpDetails.IPv4Address.IPAddress
+    $IfUpPrefixLength = $IfUpDetails.IPv4Address.PrefixLength
+    $IfUpNextHop = $IfUpDetails.IPv4DefaultGateway.NextHop
+
+    Write-Host "Interface $InterfaceUp is UP, $IfUpPrefixOrigin, $IfUpIPAddress/$IfUpPrefixLength $IfUpNextHop" -ForegroundColor DarkGray
     }
 
 #$data | Add-Member -MemberType NoteProperty -Name "Interface Name" -Value $IPDetails.NetAdapter.Name
