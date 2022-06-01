@@ -204,7 +204,7 @@ if ($IPDetails.InterfaceAlias -like '*Wi-Fi*')
     $SignalLevelPercent_trimmed = $SignalLevelPercent.TrimEnd('%')
     $SignalLeveldBm = (([int]$SignalLevelPercent_trimmed)/2) - 100
 
-    Write-Host ("The Signal is: " +$SignalLevelPercent +" ," +$SignalLeveldBm +" dBm") -ForegroundColor DarkGray
+    Write-Host ("The Signal is: " +$SignalLevelPercent +" " +$SignalLeveldBm +" dBm") -ForegroundColor DarkGray
 
 
     ### Receive Rate
