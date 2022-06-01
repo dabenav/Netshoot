@@ -54,9 +54,9 @@ Write-Host "`nCollecting Information.....`n" -ForegroundColor DarkGray
 
 ### Get Best Route IP Configuration details
 
-$BestRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" | sort RouteMetric | Select-Object -First 1
-$DefaultIfIndex = $BestRoute.ifIndex
-$DefaultInterface = $BestRoute.InterfaceAlias
+$NextHop =  Test-NetConnection 8.8.8.8  -DiagnoseRouting
+$DefaultIfIndex = $NextHop.OutgoingInterfaceIndex
+$DefaultInterface = $NextHop.OutgoingInterfaceAlias
 
 Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
 
