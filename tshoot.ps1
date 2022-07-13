@@ -434,7 +434,7 @@ if ($domain -ne "Workgroup")
     else
     {
         #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Unreachable" -Force
-        Write-Host "Domain Controller Unreachable -ForegroundColor DarkRed"
+        Write-Host "Domain Controller Unreachable" -ForegroundColor DarkRed"
     }             
 }
 else
