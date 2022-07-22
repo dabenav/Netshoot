@@ -525,7 +525,7 @@ $SpeedTestResult = &".\speedtest.exe" --accept-license --format=json | ConvertFr
 Write-Host ("The Internet Service Provider is: " + $speedtestobject.ISP ) -ForegroundColor DarkGray
 Write-Host ("The Speed Test Server Location is: " + $speedtestobject.Location ) -ForegroundColor DarkGray
 Write-Host ("The Speed Test Server Country is: " + $speedtestobject.Country ) -ForegroundColor DarkGray
-Write-Host ("The Download Spped is: " + $speedtestobject.downloadspeed +" Mbps") -ForegroundColor DarkGray
+Write-Host ("The Download Speed is: " + $speedtestobject.downloadspeed +" Mbps") -ForegroundColor DarkGray
 Write-Host ("The Upload speed is: " + $speedtestobject.uploadspeed + " Mbps") -ForegroundColor DarkGray
 Write-Host ("The Latency is: " + $SpeedTestObject.latency + " ms") -ForegroundColor DarkGray
 Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColor DarkGray
