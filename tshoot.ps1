@@ -279,11 +279,11 @@ if (![string]::IsNullOrWhiteSpace($Geteway))
 
         if ( $lost5 -eq 0 )
         {
-            Write-Host "Ping test hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkGray
+            Write-Host "Ping test to hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkGray
         }
         else
         {
-            Write-Host "Ping test hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkRed
+            Write-Host "Ping test to hop #$hop $TraceHop response time Min/Avg/Max = $Minimum5/$average5/$Maximum5 ms, Packet Loss $lostpercentage5%" -ForegroundColor DarkRed
         }
         
     }
