@@ -94,7 +94,7 @@ foreach ($InterfaceUp in $InterfacesUp)
 
 ### Print Public IP Address 
 
-Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
+Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray`n
 
 
 ### Print CPU usage ##
