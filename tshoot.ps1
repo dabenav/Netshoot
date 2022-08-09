@@ -423,11 +423,11 @@ if ($domain -ne "Workgroup")
         #$data | Add-Member -MemberType NoteProperty -Name "Domain Status" -Value "Domain Reachable" -Force
         if ( $lost2 -eq 0 )
         {
-            Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkGray
+            Write-Host "Ping test to Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkGray
         }
         else
         {
-            Write-Host "Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkRed
+            Write-Host "Ping test to Domain Controller response time Min/Avg/Max = $Minimum2/$average2/$Maximum2 ms, Packet Loss $lostpercentage2%" -ForegroundColor DarkRed
         }
         
     }
