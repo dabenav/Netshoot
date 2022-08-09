@@ -97,6 +97,18 @@ foreach ($InterfaceUp in $InterfacesUp)
 Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray
 
 
+### Print CPU usage ##
+$cpuAverage = $Processor = (Get-WmiObject -Class win32_processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average | Select-Object Average).Average
+
+Write-Host "The CPU Average is: $cpuAverage" -ForegroundColor DarkGray
+
+### Print RAM usage ##
+$CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
+$RAM = [math]::Round((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)/1024/1024),2)
+
+Write-Host "The RAM usage is: $RAM MB" -ForegroundColor DarkGray
+
+
 ####################################### WiFi Settings ########################################
 
 
