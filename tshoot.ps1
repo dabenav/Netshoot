@@ -60,6 +60,14 @@ $DefaultInterface = $NextHop.OutgoingInterfaceAlias
 
 Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
 
+
+### Get the speed of the Default Interface
+
+$SpeedDefaultInterface = (Get-NetAdapter | where ifIndex -eq $DefaultIfIndex).LinkSpeed
+
+Write-Host "The default interface Speed is $SpeedDefaultInterface" -ForegroundColor DarkGray
+
+
 # Setting up standard variable for output as required. Do not edit these variables.
 
 $IPDetails = $null
