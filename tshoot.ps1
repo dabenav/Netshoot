@@ -69,101 +69,196 @@ $RAM = [math]::Round((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhys
 
 Write-Host "The RAM usage is: $RAM GB" -ForegroundColor DarkGray
 
-
+###############################################################################################################
 ####################################### WiFi Settings ########################################
 
+# Requires $DefaultIfIndex from the existing Collecting Information section.
+# Native WLAN data is independent of the Windows display language.
 
-if ($IPDetails.InterfaceAlias -like '*Wi-Fi*' -or $IPDetails.InterfaceAlias -like '*Wireless*')
-{  
-    Write-Host "`nWiFi Information...`n" -ForegroundColor DarkGray
+try {
+    if (-not ('Netshoot.WlanReaderV1' -as [type])) {
+        Add-Type -ErrorAction Stop -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
 
-    #Run netsh command to get wirelss profile info
-    $NetshOut = netsh.exe wlan show interfaces
+namespace Netshoot {
+    public static class WlanReaderV1 {
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct InterfaceInfo {
+            public Guid Id;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string Description;
+            public int State;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Ssid {
+            public uint Length;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] Bytes;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Association {
+            public Ssid Ssid;
+            public uint BssType;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 6)]
+            public byte[] Bssid;
+            public uint PhyType, PhyIndex, SignalQuality, RxRate, TxRate;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Security {
+            public int Enabled, OneXEnabled;
+            public uint Authentication, Cipher;
+        }
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct Connection {
+            public int State, Mode;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string Profile;
+            public Association Association;
+            public Security Security;
+        }
+        public class Result {
+            public bool IsWifi;
+            public int State;
+            public Connection? Current;
+            public uint ConnectionError, ChannelError;
+            public int? Channel;
+        }
+        [DllImport("wlanapi.dll")]
+        static extern uint WlanOpenHandle(uint version, IntPtr reserved, out uint negotiated, out IntPtr handle);
+        [DllImport("wlanapi.dll")]
+        static extern uint WlanEnumInterfaces(IntPtr handle, IntPtr reserved, out IntPtr list);
+        [DllImport("wlanapi.dll")]
+        static extern uint WlanQueryInterface(IntPtr handle, ref Guid id, int opcode, IntPtr reserved,
+            out uint size, out IntPtr data, out int valueType);
+        [DllImport("wlanapi.dll")]
+        static extern void WlanFreeMemory(IntPtr memory);
+        [DllImport("wlanapi.dll")]
+        static extern uint WlanCloseHandle(IntPtr handle, IntPtr reserved);
 
-    # Physical Address
-    $Physical_line = $NetshOut | Select-String -Pattern '^\s*(Physical address|Direcci[oó]n f[ií]sica)\s*:' | Select-Object -First 1
-    $Physical = ($Physical_line -split ":", 2)[-1].Trim()
-
-    Write-Host ("The adapter mac address is: " + $Physical ) -ForegroundColor DarkGray
-
-    # State
-    $State_line = $NetshOut | Select-String -Pattern '^\s*(State|Estado)\s*:' | Select-Object -First 1
-    $State = ($State_line -split ":")[-1].Trim()
-
-    if ($State -in @('connected', 'conectado')) {
-
-    ### SSID
-    $SSID_line = $NetshOut | Select-String 'SSID'| select -First 1
-    $SSID = ($SSID_line -split ":")[-1].Trim()
-
-    Write-Host ("The SSID is: " + $SSID ) -ForegroundColor DarkGray
-    ### BSSID
-    $BSSID_line = $NetshOut | Select-String -Pattern 'BSSID'
-    $BSSID = ($BSSID_line -split ":", 2)[-1].Trim()
-    
-    Write-Host ("The BSSID is: " + $BSSID ) -ForegroundColor DarkGray
-
-
-    ### RadioType
-    $RadioType_line = $NetshOut | Select-String -Pattern '^\s*(Radio type|Tipo de radio)\s*:' | Select-Object -First 1
-    $RadioType = ($RadioType_line -split ":")[-1].Trim()
-
-    $WiFiVersion = @{
-        '802.11be' = 'Wi-Fi 7'
-        '802.11ax' = 'Wi-Fi 6'
-        '802.11ac' = 'Wi-Fi 5'
-        '802.11n'  = 'Wi-Fi 4'
-    }
-
-    $Generation = $WiFiVersion[$RadioType]
-
-    if (-not $Generation) {
-        $Generation = 'Unknown'
-    }
-
-    Write-Host "The protocol is: $RadioType ( $Generation )" -ForegroundColor DarkGray
-
-
-    ### Authentication
-    $Authentication_line = $NetshOut | Select-String -Pattern '^\s*(Authentication|Autenticaci[oó]n)\s*:' | Select-Object -First 1
-    $Authentication = ($Authentication_line -split ":")[-1].Trim()
-
-    Write-Host ("The Authentication is: " + $Authentication ) -ForegroundColor DarkGray
-
-
-    ### Channel
-    $Channel_line = $NetshOut | Select-String -Pattern '^\s*(Channel|Canal)\s*:' | Select-Object -First 1
-    $Channel = ($Channel_line -split ":")[-1].Trim()
-
-    Write-Host ("The Channel is: " + $Channel ) -ForegroundColor DarkGray
-
-
-    # Signal (%)
-    $SignalLevelPercent_line = $NetshOut | Select-String -Pattern '^\s*(Signal|Se[nñ]al)\s*:' | Select-Object -First 1
-    $SignalLevelPercent = ($SignalLevelPercent_line -split ":")[-1].Trim()
-
-    # Signal (dBm)
-    $SignalLevelPercent_trimmed = $SignalLevelPercent.TrimEnd('%')
-    $SignalLeveldBm = (([int]$SignalLevelPercent_trimmed)/2) - 100
-
-    Write-Host ("The Signal is: " +$SignalLevelPercent +" " +$SignalLeveldBm +" dBm") -ForegroundColor DarkGray
-
-
-    ### Receive Rate
-    $RecRate_line = $NetshOut | Select-String -Pattern '^\s*(Receive rate|Velocidad de recepci[oó]n)\s*(\(.*?\))?\s*:' | Select-Object -First 1
-    $RecRate = [int]($RecRate_line -split ":")[-1].Trim()
-
-    Write-Host ("The Receive Rate is: " + $RecRate +" Mbps" ) -ForegroundColor DarkGray
-
-
-    # Transmit Rate
-    $TransRate_line = $NetshOut | Select-String -Pattern '^\s*(Transmit rate|Velocidad de transmisi[oó]n)\s*(\(.*?\))?\s*:' | Select-Object -First 1
-    $TransRate = [int]($TransRate_line -split ":")[-1].Trim()
-
-    Write-Host ("The Transmit Rate is: " + $TransRate +" Mbps" ) -ForegroundColor DarkGray
+        public static string SsidText(Ssid ssid) {
+            if (ssid.Length > 32) return "Unavailable (invalid SSID length)";
+            try {
+                return new UTF8Encoding(false, true).GetString(ssid.Bytes, 0, (int)ssid.Length);
+            } catch (DecoderFallbackException) {
+                return "Hex: " + BitConverter.ToString(ssid.Bytes, 0, (int)ssid.Length);
+            }
+        }
+        public static Result Read(Guid id) {
+            IntPtr handle = IntPtr.Zero, list = IntPtr.Zero;
+            uint version;
+            uint error = WlanOpenHandle(2, IntPtr.Zero, out version, out handle);
+            if (error != 0) throw new Win32Exception((int)error);
+            try {
+                error = WlanEnumInterfaces(handle, IntPtr.Zero, out list);
+                if (error != 0) throw new Win32Exception((int)error);
+                Result result = new Result();
+                int count = Marshal.ReadInt32(list);
+                int stride = Marshal.SizeOf(typeof(InterfaceInfo));
+                for (int i = 0; i < count; i++) {
+                    InterfaceInfo item = (InterfaceInfo)Marshal.PtrToStructure(
+                        IntPtr.Add(list, 8 + i * stride), typeof(InterfaceInfo));
+                    if (item.Id == id) { result.IsWifi = true; result.State = item.State; break; }
+                }
+                if (!result.IsWifi || result.State != 1) return result;
+                IntPtr data = IntPtr.Zero;
+                uint size;
+                int valueType;
+                try {
+                    result.ConnectionError = WlanQueryInterface(handle, ref id, 7, IntPtr.Zero,
+                        out size, out data, out valueType);
+                    if (result.ConnectionError == 0) {
+                        if (data == IntPtr.Zero || size < Marshal.SizeOf(typeof(Connection)))
+                            result.ConnectionError = 13;
+                        else result.Current = (Connection)Marshal.PtrToStructure(data, typeof(Connection));
+                    }
+                } finally { if (data != IntPtr.Zero) WlanFreeMemory(data); }
+                data = IntPtr.Zero;
+                try {
+                    result.ChannelError = WlanQueryInterface(handle, ref id, 8, IntPtr.Zero,
+                        out size, out data, out valueType);
+                    if (result.ChannelError == 0) {
+                        if (data == IntPtr.Zero || size < 4) result.ChannelError = 13;
+                        else result.Channel = Marshal.ReadInt32(data);
+                    }
+                } finally { if (data != IntPtr.Zero) WlanFreeMemory(data); }
+                return result;
+            } finally {
+                if (list != IntPtr.Zero) WlanFreeMemory(list);
+                WlanCloseHandle(handle, IntPtr.Zero);
+            }
+        }
     }
 }
+'@
+    }
 
+    $WifiAdapter = Get-NetAdapter -InterfaceIndex $DefaultIfIndex -ErrorAction Stop
+    $WifiData = [Netshoot.WlanReaderV1]::Read([guid]$WifiAdapter.InterfaceGuid)
+
+    if ($WifiData.IsWifi) {
+        Write-Host "`nWiFi Information...`n" -ForegroundColor DarkGray
+        $Physical = $WifiAdapter.MacAddress -replace '-', ':'
+        if ([string]::IsNullOrWhiteSpace($Physical)) { $Physical = 'Unavailable' }
+        Write-Host "The adapter mac address is: $Physical" -ForegroundColor DarkGray
+
+        if ($null -ne $WifiData.Current) {
+            $Connection = $WifiData.Current
+            $Association = $Connection.Association
+            $SSID = [Netshoot.WlanReaderV1]::SsidText($Association.Ssid)
+            $BSSID = [BitConverter]::ToString($Association.Bssid).Replace('-', ':')
+            $Protocols = @{ 1='FHSS'; 2='DSSS'; 3='Infrared'; 4='802.11a'; 5='802.11b';
+                6='802.11g'; 7='802.11n'; 8='802.11ac'; 9='802.11ad'; 10='802.11ax'; 11='802.11be' }
+            $RadioType = $Protocols[[int]$Association.PhyType]
+            if (-not $RadioType) { $RadioType = "Unknown ($($Association.PhyType))" }
+            $WiFiVersion = @{ '802.11be'='Wi-Fi 7'; '802.11ax'='Wi-Fi 6';
+                '802.11ac'='Wi-Fi 5'; '802.11n'='Wi-Fi 4' }
+            $Generation = $WiFiVersion[$RadioType]
+            if (-not $Generation) { $Generation = 'Unknown' }
+
+            $AuthNames = @{ 1='Open'; 2='Shared key'; 3='WPA-Enterprise'; 4='WPA-Personal';
+                5='WPA-None'; 6='WPA2-Enterprise'; 7='WPA2-Personal';
+                8='WPA3-Enterprise 192-bit'; 9='WPA3-Personal (SAE)';
+                10='Enhanced Open (OWE)'; 11='WPA3-Enterprise' }
+            $Authentication = $null
+            if ($Connection.Security.Authentication -le 11) { $Authentication = $AuthNames[[int]$Connection.Security.Authentication] }
+            if (-not $Authentication) { $Authentication = "Unknown ($($Connection.Security.Authentication))" }
+            $SignalQuality = [int]$Association.SignalQuality
+            $SignalText = 'Unavailable'
+            if ($SignalQuality -ge 0 -and $SignalQuality -le 100) {
+                $SignalLeveldBm = ($SignalQuality / 2.0) - 100
+                $SignalText = "$SignalQuality% $SignalLeveldBm dBm"
+            }
+            # Native WLAN link rates are reported in kilobits per second.
+            $RecRate = [int]($Association.RxRate / 1000.0)
+            $TransRate = [int]($Association.TxRate / 1000.0)
+
+            Write-Host "The SSID is: $SSID" -ForegroundColor DarkGray
+            Write-Host "The BSSID is: $BSSID" -ForegroundColor DarkGray
+            Write-Host "The protocol is: $RadioType ( $Generation )" -ForegroundColor DarkGray
+            Write-Host "The Authentication is: $Authentication" -ForegroundColor DarkGray
+            $Channel = 'Unavailable'
+            if ($null -ne $WifiData.Channel -and $WifiData.Channel -gt 0) { $Channel = $WifiData.Channel }
+            Write-Host "The Channel is: $Channel" -ForegroundColor DarkGray
+            Write-Host "The Signal is: $SignalText" -ForegroundColor DarkGray
+            Write-Host "The Receive Rate is: $RecRate Mbps" -ForegroundColor DarkGray
+            Write-Host "The Transmit Rate is: $TransRate Mbps" -ForegroundColor DarkGray
+        } elseif ($WifiData.State -eq 1) {
+            Write-Warning "WiFi connection details unavailable. Windows error: $($WifiData.ConnectionError)."
+            if ($WifiData.ConnectionError -eq 5) {
+                Write-Warning 'Access denied. Check Windows location permissions and organizational policies.'
+            }
+        } else {
+            Write-Host 'WiFi connection details unavailable: adapter is not connected.' -ForegroundColor DarkGray
+        }
+
+    }
+} catch {
+    Write-Warning "WiFi information unavailable: $($_.Exception.Message)"
+}
+###############################################################################################################
 
 
 ################################# Tests #####################################
