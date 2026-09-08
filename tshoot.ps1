@@ -81,16 +81,16 @@ if ($IPDetails.InterfaceAlias -like '*Wi-Fi*' -or $IPDetails.InterfaceAlias -lik
     $NetshOut = netsh.exe wlan show interfaces
 
     # Physical Address
-    $Physical_line = $NetshOut | Select-String -Pattern 'Physical'
+    $Physical_line = $NetshOut | Select-String -Pattern '^\s*(Physical address|Direcci[oó]n f[ií]sica)\s*:' | Select-Object -First 1
     $Physical = ($Physical_line -split ":", 2)[-1].Trim()
 
     Write-Host ("The adapter mac address is: " + $Physical ) -ForegroundColor DarkGray
 
     # State
-    $State_line = $NetshOut | Select-String -Pattern 'State'
+    $State_line = $NetshOut | Select-String -Pattern '^\s*(State|Estado)\s*:' | Select-Object -First 1
     $State = ($State_line -split ":")[-1].Trim()
 
-    if ($State -eq 'connected') {
+    if ($State -in @('connected', 'conectado')) {
 
     ### SSID
     $SSID_line = $NetshOut | Select-String 'SSID'| select -First 1
@@ -105,7 +105,7 @@ if ($IPDetails.InterfaceAlias -like '*Wi-Fi*' -or $IPDetails.InterfaceAlias -lik
 
 
     ### RadioType
-    $RadioType_line = $NetshOut | Select-String -Pattern 'Radio type'
+    $RadioType_line = $NetshOut | Select-String -Pattern '^\s*(Radio type|Tipo de radio)\s*:' | Select-Object -First 1
     $RadioType = ($RadioType_line -split ":")[-1].Trim()
 
     $WiFiVersion = @{
@@ -125,21 +125,21 @@ if ($IPDetails.InterfaceAlias -like '*Wi-Fi*' -or $IPDetails.InterfaceAlias -lik
 
 
     ### Authentication
-    $Authentication_line = $NetshOut | Select-String -Pattern 'Authentication'
+    $Authentication_line = $NetshOut | Select-String -Pattern '^\s*(Authentication|Autenticaci[oó]n)\s*:' | Select-Object -First 1
     $Authentication = ($Authentication_line -split ":")[-1].Trim()
 
     Write-Host ("The Authentication is: " + $Authentication ) -ForegroundColor DarkGray
 
 
     ### Channel
-    $Channel_line = $NetshOut | Select-String -Pattern 'Channel'
+    $Channel_line = $NetshOut | Select-String -Pattern '^\s*(Channel|Canal)\s*:' | Select-Object -First 1
     $Channel = ($Channel_line -split ":")[-1].Trim()
 
     Write-Host ("The Channel is: " + $Channel ) -ForegroundColor DarkGray
 
 
     # Signal (%)
-    $SignalLevelPercent_line = $NetshOut | Select-String -Pattern 'Signal'
+    $SignalLevelPercent_line = $NetshOut | Select-String -Pattern '^\s*(Signal|Se[nñ]al)\s*:' | Select-Object -First 1
     $SignalLevelPercent = ($SignalLevelPercent_line -split ":")[-1].Trim()
 
     # Signal (dBm)
@@ -150,14 +150,14 @@ if ($IPDetails.InterfaceAlias -like '*Wi-Fi*' -or $IPDetails.InterfaceAlias -lik
 
 
     ### Receive Rate
-    $RecRate_line = $NetshOut | Select-String -Pattern 'Receive rate'
+    $RecRate_line = $NetshOut | Select-String -Pattern '^\s*(Receive rate|Velocidad de recepci[oó]n)\s*(\(.*?\))?\s*:' | Select-Object -First 1
     $RecRate = [int]($RecRate_line -split ":")[-1].Trim()
 
     Write-Host ("The Receive Rate is: " + $RecRate +" Mbps" ) -ForegroundColor DarkGray
 
 
     # Transmit Rate
-    $TransRate_line = $NetshOut | Select-String -Pattern 'Transmit rate'
+    $TransRate_line = $NetshOut | Select-String -Pattern '^\s*(Transmit rate|Velocidad de transmisi[oó]n)\s*(\(.*?\))?\s*:' | Select-Object -First 1
     $TransRate = [int]($TransRate_line -split ":")[-1].Trim()
 
     Write-Host ("The Transmit Rate is: " + $TransRate +" Mbps" ) -ForegroundColor DarkGray
