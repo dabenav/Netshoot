@@ -180,7 +180,6 @@ $RAM = [math]::Round((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhys
 
 Write-Host "The RAM usage is: $RAM GB" -ForegroundColor DarkGray
 
-
 ###############################################################################################################
 ####################################### WiFi Settings ########################################
 
@@ -370,9 +369,8 @@ namespace Netshoot {
 } catch {
     Write-Warning "WiFi information unavailable: $($_.Exception.Message)"
 }
-
-
 ###############################################################################################################
+
 
 ################################# Tests #####################################
 
@@ -601,6 +599,63 @@ Remove-Item -Path .\ts.ps1
 
 
 Write-Host   "`nNetwork Connectivity Tests Completed`n" -ForegroundColor DarkGray
+
+
+####################################### WiFi Logs ########################################
+
+Write-Host "`nCollecting WiFi Logs -----`n" -ForegroundColor DarkGray
+
+try {
+    $WiFiLogEndTime = Get-Date
+    $WiFiEvents = @(
+        Get-WinEvent -FilterHashtable @{
+            LogName   = 'Microsoft-Windows-WLAN-AutoConfig/Operational'
+            StartTime = $WiFiLogEndTime.AddHours(-24)
+            EndTime   = $WiFiLogEndTime
+        } -ErrorAction Stop |
+        Sort-Object TimeCreated
+    )
+
+    Write-Host "WiFi Events - Last 24 Hours`n" -ForegroundColor DarkGray
+
+    $WiFiEvents |
+        Select-Object @{
+            Name = 'Date and Time'
+            Expression = { $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss') }
+        }, Id, @{
+            Name = 'Level'
+            Expression = { $_.LevelDisplayName }
+        }, @{
+            Name = 'Message'
+            Expression = { ($_.Message -split '\r?\n')[0] }
+        } |
+        Format-Table -AutoSize -Wrap |
+        Out-Host
+
+    $WiFiIssues = @(
+        $WiFiEvents | Where-Object { $_.Level -in @(1, 2, 3) }
+    )
+
+    Write-Host "`nWiFi Errors and Warnings - Full Details`n" -ForegroundColor DarkGray
+
+    if ($WiFiIssues.Count -gt 0) {
+        $WiFiIssues |
+            Format-List TimeCreated, Id, LevelDisplayName, Message |
+            Out-Host
+    }
+    else {
+        Write-Host 'No critical events, errors or warnings were found.' -ForegroundColor DarkGray
+    }
+}
+catch {
+    if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') {
+        Write-Host 'No WiFi events were found in the last 24 hours.' -ForegroundColor DarkGray
+    }
+    else {
+        Write-Warning "Could not read WiFi events: $($_.Exception.Message)"
+    }
+}
+
 
 
 
