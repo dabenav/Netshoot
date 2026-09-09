@@ -554,7 +554,7 @@ try {
         }
 
         Write-Host ""
-        Write-Host "Speed Test #$TestNumber" -ForegroundColor DarkGray
+        Write-Host "Speed Test #$TestNumber`n" -ForegroundColor DarkGray
 
         $SpeedTestJson = & $SpeedTestPath --accept-license --format=json
 
@@ -617,7 +617,7 @@ try {
 
     Write-Host "WiFi Events - Last 24 Hours`n" -ForegroundColor DarkGray
 
-    $WiFiEvents |
+    $WiFiSummaryText = $WiFiEvents |
         Select-Object @{
             Name = 'Date and Time'
             Expression = { $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss') }
@@ -629,7 +629,9 @@ try {
             Expression = { ($_.Message -split '\r?\n')[0] }
         } |
         Format-Table -AutoSize -Wrap |
-        Out-String -Stream | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray }
+        Out-String
+
+    Write-Host ([regex]::Replace($WiFiSummaryText, '\x1B\[[0-9;:]*m', '')) -ForegroundColor DarkGray
 
     $WiFiIssues = @(
         $WiFiEvents | Where-Object { $_.Level -in @(1, 2, 3) }
@@ -638,9 +640,11 @@ try {
     Write-Host "`nWiFi Errors and Warnings - Full Details`n" -ForegroundColor DarkGray
 
     if ($WiFiIssues.Count -gt 0) {
-        $WiFiIssues |
+        $WiFiDetailsText = $WiFiIssues |
             Format-List TimeCreated, Id, LevelDisplayName, Message |
-            Out-String -Stream | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray }
+            Out-String
+
+        Write-Host ([regex]::Replace($WiFiDetailsText, '\x1B\[[0-9;:]*m', '')) -ForegroundColor DarkGray
     }
     else {
         Write-Host 'No critical events, errors or warnings were found.' -ForegroundColor DarkGray
