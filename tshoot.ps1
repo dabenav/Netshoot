@@ -1,5 +1,5 @@
 ####################################################################################################################
-#  Date: 09 Sep 2026
+#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)
 #  Name: Network Troubleshooting Script
 #  Task: To verify the network connectivity performance and errors
 #  By: Daniel Benavides
@@ -74,6 +74,57 @@ Write-Host "The Manufacturer is: $Manufacturer" -ForegroundColor DarkGray
 Write-Host "The Model is: $Model" -ForegroundColor DarkGray
 Write-Host "The Windows Version is: $WindowsVersion" -ForegroundColor DarkGray
 
+# Read the installed physical Wi-Fi adapter and its matching driver.
+$SystemWifiAdapterName = 'Unavailable'
+$SystemWifiDriverProvider = 'Unavailable'
+$SystemWifiDriverVersion = 'Unavailable'
+$SystemWifiDriverDate = 'Unavailable'
+
+try {
+    $SystemWifiAdapter = Get-NetAdapter -Physical -ErrorAction Stop |
+        Where-Object { $_.NdisPhysicalMedium -in @(1, 9) } |
+        Sort-Object @{ Expression = { if ($_.Status -eq 'Up') { 0 } else { 1 } } }, InterfaceIndex |
+        Select-Object -First 1
+
+    if ($SystemWifiAdapter) {
+        if (-not [string]::IsNullOrWhiteSpace($SystemWifiAdapter.InterfaceDescription)) {
+            $SystemWifiAdapterName = $SystemWifiAdapter.InterfaceDescription.Trim()
+        }
+        if (-not [string]::IsNullOrWhiteSpace($SystemWifiAdapter.PnPDeviceID)) {
+            $SystemWifiDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver `
+                -Filter "DeviceClass = 'NET'" -ErrorAction Stop |
+                Where-Object { $_.DeviceID -eq $SystemWifiAdapter.PnPDeviceID } |
+                Select-Object -First 1
+
+            if ($SystemWifiDriver) {
+                if (-not [string]::IsNullOrWhiteSpace($SystemWifiDriver.DriverProviderName)) {
+                    $SystemWifiDriverProvider = $SystemWifiDriver.DriverProviderName.Trim()
+                }
+                if (-not [string]::IsNullOrWhiteSpace($SystemWifiDriver.DriverVersion)) {
+                    $SystemWifiDriverVersion = $SystemWifiDriver.DriverVersion.Trim()
+                }
+                if ($SystemWifiDriver.DriverDate -is [datetime]) {
+                    $SystemWifiDriverDate = $SystemWifiDriver.DriverDate.ToString('yyyy-MM-dd')
+                } elseif ([string]$SystemWifiDriver.DriverDate -match '^\d{8}') {
+                    $SystemWifiDriverDate = [datetime]::ParseExact(
+                        ([string]$SystemWifiDriver.DriverDate).Substring(0, 8),
+                        'yyyyMMdd', [Globalization.CultureInfo]::InvariantCulture
+                    ).ToString('yyyy-MM-dd')
+                }
+            }
+        }
+    }
+} catch {
+    # Keep available values and allow the diagnostic to continue.
+}
+
+Write-Host '' -ForegroundColor DarkGray
+Write-Host "The WiFi Adapter is: $SystemWifiAdapterName" -ForegroundColor DarkGray
+Write-Host "The Driver Provider is: $SystemWifiDriverProvider" -ForegroundColor DarkGray
+Write-Host "The Driver Version is: $SystemWifiDriverVersion" -ForegroundColor DarkGray
+Write-Host "The Driver Date is: $SystemWifiDriverDate" -ForegroundColor DarkGray
+
+
 
 ########################## Get Interface Name Information ###############################
 
@@ -128,6 +179,7 @@ $CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
 $RAM = [math]::Round((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)/1024/1024),2)
 
 Write-Host "The RAM usage is: $RAM GB" -ForegroundColor DarkGray
+
 
 ###############################################################################################################
 ####################################### WiFi Settings ########################################
@@ -318,8 +370,9 @@ namespace Netshoot {
 } catch {
     Write-Warning "WiFi information unavailable: $($_.Exception.Message)"
 }
-###############################################################################################################
 
+
+###############################################################################################################
 
 ################################# Tests #####################################
 
@@ -737,4 +790,3 @@ namespace Netshoot {
 
 
 ########################################### END ###############################################
-
