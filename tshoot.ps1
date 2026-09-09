@@ -1,5 +1,5 @@
 ########################################################################
-#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                  #
+#  Date: 09 Sep 2026 16:40:30 -05:00 (America/Bogota)                  #
 #  Name: Network Troubleshooting Script                                #
 #  Task: To verify the network connectivity performance and errors     #
 #  By: Daniel Benavides                                                #
@@ -698,7 +698,7 @@ catch {
 
             Add-Type -AssemblyName System.Drawing -ErrorAction Stop
             Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
-            if (-not ('Netshoot.PdfReportV3' -as [type])) {
+            if (-not ('Netshoot.PdfReportV4' -as [type])) {
                 Add-Type -ReferencedAssemblies System.Drawing, System.Windows.Forms -ErrorAction Stop -TypeDefinition @'
 using System;
 using System.Collections.Generic;
@@ -714,7 +714,7 @@ using System.Windows.Forms;
 namespace Netshoot {
     // Render Unicode text with Windows fonts and embed pages in a real PDF.
     // No browser, Office installation, printer driver or downloaded library is required.
-    public static class PdfReportV3 {
+    public static class PdfReportV4 {
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
         struct FLASHWINFO {
             public uint cbSize;
@@ -850,38 +850,24 @@ namespace Netshoot {
                             "Downloads"
                         );
                         using (Form owner = new Form()) {
-                            owner.Text = "Network Diagnostic Completed";
+                            owner.Text = "Save Network Test Report";
                             owner.StartPosition = FormStartPosition.CenterScreen;
-                            owner.ClientSize = new Size(480, 160);
-                            owner.FormBorderStyle = FormBorderStyle.FixedDialog;
-                            owner.MaximizeBox = false;
-                            owner.MinimizeBox = false;
+                            owner.ClientSize = new Size(1, 1);
+                            owner.FormBorderStyle = FormBorderStyle.FixedSingle;
                             owner.ShowInTaskbar = true;
                             owner.TopMost = true;
+                            owner.Opacity = 0;
                             owner.Icon = SystemIcons.Information;
-                            Label message = new Label();
-                            message.Text = "Diagn\u00f3stico terminado.\r\nHaz clic en Aceptar para elegir d\u00f3nde guardar el PDF.";
-                            message.SetBounds(24, 25, 432, 65);
-                            owner.Controls.Add(message);
-                            Button accept = new Button();
-                            accept.Text = "Aceptar";
-                            accept.SetBounds(350, 108, 105, 30);
-                            owner.Controls.Add(accept);
-                            owner.AcceptButton = accept;
-                            owner.Shown += delegate {
-                                try { System.Media.SystemSounds.Exclamation.Play(); } catch { }
-                                FlashReportWindow(owner.Handle, true);
-                            };
-                            owner.Activated += delegate { FlashReportWindow(owner.Handle, false); };
-                            accept.Click += delegate {
+                            owner.Show();
+                            owner.Activate();
+                            try { System.Media.SystemSounds.Exclamation.Play(); } catch { }
+                            FlashReportWindow(owner.Handle, true);
+                            try {
+                                if (dialog.ShowDialog(owner) == DialogResult.OK) selected = dialog.FileName;
+                            } finally {
                                 FlashReportWindow(owner.Handle, false);
-                                try {
-                                    if (dialog.ShowDialog(owner) == DialogResult.OK) selected = dialog.FileName;
-                                } catch (Exception error) { failure = error; }
-                                finally { owner.Close(); }
-                            };
-                            owner.FormClosing += delegate { FlashReportWindow(owner.Handle, false); };
-                            owner.ShowDialog();
+                                owner.Close();
+                            }
                         }
                     }
                 } catch (Exception error) { failure = error; }
@@ -896,9 +882,9 @@ namespace Netshoot {
 }
 '@
             }
-            [Netshoot.PdfReportV3]::Create($DiagnosticReportText, $DiagnosticReportTemp + '.pdf')
+            [Netshoot.PdfReportV4]::Create($DiagnosticReportText, $DiagnosticReportTemp + '.pdf')
             Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -ErrorAction SilentlyContinue
-            $DiagnosticReportTarget = [Netshoot.PdfReportV3]::ChoosePath($DiagnosticReportName)
+            $DiagnosticReportTarget = [Netshoot.PdfReportV4]::ChoosePath($DiagnosticReportName)
             if (-not [string]::IsNullOrWhiteSpace($DiagnosticReportTarget)) {
                 Copy-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -Destination $DiagnosticReportTarget -Force -ErrorAction Stop
                 Remove-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -ErrorAction SilentlyContinue
