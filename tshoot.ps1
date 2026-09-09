@@ -1,5 +1,5 @@
 ########################################################################
-#  Date: 09 Sep 2026 16:40:30 -05:00 (America/Bogota)                  #
+#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                  #
 #  Name: Network Troubleshooting Script                                #
 #  Task: To verify the network connectivity performance and errors     #
 #  By: Daniel Benavides                                                #
@@ -37,6 +37,24 @@ $pingCount = 8
 
 
 ################################################ SYSTEM INFORMATION ################################################
+
+$NextHop =  Test-NetConnection 8.8.8.8  -DiagnoseRouting
+$DefaultIfIndex = $NextHop.OutgoingInterfaceIndex
+$DefaultInterface = $NextHop.OutgoingInterfaceAlias
+$ActiveAdapter = $null
+$ActiveConnectionType = 'Network'
+try {
+    if ($DefaultIfIndex -gt 0) {
+        $ActiveAdapter = Get-NetAdapter -InterfaceIndex $DefaultIfIndex -ErrorAction Stop
+        if ($ActiveAdapter.NdisPhysicalMedium -in @(1,9) -or $ActiveAdapter.InterfaceType -eq 71) {
+            $ActiveConnectionType = 'WiFi'
+        } elseif ($ActiveAdapter.NdisPhysicalMedium -eq 14 -or ($ActiveAdapter.InterfaceType -eq 6 -and $ActiveAdapter.HardwareInterface)) {
+            $ActiveConnectionType = 'Ethernet'
+        }
+    }
+} catch {
+    Write-Warning "Active adapter information unavailable: $($_.Exception.Message)"
+}
 
 $TestDateTime = Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz'
 $ComputerName = $env:COMPUTERNAME
@@ -78,40 +96,37 @@ Write-Host "The Manufacturer is: $Manufacturer" -ForegroundColor DarkGray
 Write-Host "The Model is: $Model" -ForegroundColor DarkGray
 Write-Host "The Windows Version is: $WindowsVersion" -ForegroundColor DarkGray
 
-# Read the installed physical Wi-Fi adapter and its matching driver.
-$SystemWifiAdapterName = 'Unavailable'
-$SystemWifiDriverProvider = 'Unavailable'
-$SystemWifiDriverVersion = 'Unavailable'
-$SystemWifiDriverDate = 'Unavailable'
+# Read the adapter selected by the active route and its matching driver.
+$SystemNetworkAdapterName = 'Unavailable'
+$SystemNetworkDriverProvider = 'Unavailable'
+$SystemNetworkDriverVersion = 'Unavailable'
+$SystemNetworkDriverDate = 'Unavailable'
 
 try {
-    $SystemWifiAdapter = Get-NetAdapter -Physical -ErrorAction Stop |
-        Where-Object { $_.NdisPhysicalMedium -in @(1, 9) } |
-        Sort-Object @{ Expression = { if ($_.Status -eq 'Up') { 0 } else { 1 } } }, InterfaceIndex |
-        Select-Object -First 1
+    $SystemNetworkAdapter = $ActiveAdapter
 
-    if ($SystemWifiAdapter) {
-        if (-not [string]::IsNullOrWhiteSpace($SystemWifiAdapter.InterfaceDescription)) {
-            $SystemWifiAdapterName = $SystemWifiAdapter.InterfaceDescription.Trim()
+    if ($SystemNetworkAdapter) {
+        if (-not [string]::IsNullOrWhiteSpace($SystemNetworkAdapter.InterfaceDescription)) {
+            $SystemNetworkAdapterName = $SystemNetworkAdapter.InterfaceDescription.Trim()
         }
-        if (-not [string]::IsNullOrWhiteSpace($SystemWifiAdapter.PnPDeviceID)) {
-            $SystemWifiDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver `
+        if (-not [string]::IsNullOrWhiteSpace($SystemNetworkAdapter.PnPDeviceID)) {
+            $SystemNetworkDriver = Get-CimInstance -ClassName Win32_PnPSignedDriver `
                 -Filter "DeviceClass = 'NET'" -ErrorAction Stop |
-                Where-Object { $_.DeviceID -eq $SystemWifiAdapter.PnPDeviceID } |
+                Where-Object { $_.DeviceID -eq $SystemNetworkAdapter.PnPDeviceID } |
                 Select-Object -First 1
 
-            if ($SystemWifiDriver) {
-                if (-not [string]::IsNullOrWhiteSpace($SystemWifiDriver.DriverProviderName)) {
-                    $SystemWifiDriverProvider = $SystemWifiDriver.DriverProviderName.Trim()
+            if ($SystemNetworkDriver) {
+                if (-not [string]::IsNullOrWhiteSpace($SystemNetworkDriver.DriverProviderName)) {
+                    $SystemNetworkDriverProvider = $SystemNetworkDriver.DriverProviderName.Trim()
                 }
-                if (-not [string]::IsNullOrWhiteSpace($SystemWifiDriver.DriverVersion)) {
-                    $SystemWifiDriverVersion = $SystemWifiDriver.DriverVersion.Trim()
+                if (-not [string]::IsNullOrWhiteSpace($SystemNetworkDriver.DriverVersion)) {
+                    $SystemNetworkDriverVersion = $SystemNetworkDriver.DriverVersion.Trim()
                 }
-                if ($SystemWifiDriver.DriverDate -is [datetime]) {
-                    $SystemWifiDriverDate = $SystemWifiDriver.DriverDate.ToString('yyyy-MM-dd')
-                } elseif ([string]$SystemWifiDriver.DriverDate -match '^\d{8}') {
-                    $SystemWifiDriverDate = [datetime]::ParseExact(
-                        ([string]$SystemWifiDriver.DriverDate).Substring(0, 8),
+                if ($SystemNetworkDriver.DriverDate -is [datetime]) {
+                    $SystemNetworkDriverDate = $SystemNetworkDriver.DriverDate.ToString('yyyy-MM-dd')
+                } elseif ([string]$SystemNetworkDriver.DriverDate -match '^\d{8}') {
+                    $SystemNetworkDriverDate = [datetime]::ParseExact(
+                        ([string]$SystemNetworkDriver.DriverDate).Substring(0, 8),
                         'yyyyMMdd', [Globalization.CultureInfo]::InvariantCulture
                     ).ToString('yyyy-MM-dd')
                 }
@@ -123,10 +138,10 @@ try {
 }
 
 Write-Host '' -ForegroundColor DarkGray
-Write-Host "The WiFi Adapter is: $SystemWifiAdapterName" -ForegroundColor DarkGray
-Write-Host "The Driver Provider is: $SystemWifiDriverProvider" -ForegroundColor DarkGray
-Write-Host "The Driver Version is: $SystemWifiDriverVersion" -ForegroundColor DarkGray
-Write-Host "The Driver Date is: $SystemWifiDriverDate" -ForegroundColor DarkGray
+Write-Host "The $ActiveConnectionType Adapter is: $SystemNetworkAdapterName" -ForegroundColor DarkGray
+Write-Host "The Driver Provider is: $SystemNetworkDriverProvider" -ForegroundColor DarkGray
+Write-Host "The Driver Version is: $SystemNetworkDriverVersion" -ForegroundColor DarkGray
+Write-Host "The Driver Date is: $SystemNetworkDriverDate" -ForegroundColor DarkGray
 
 
 
@@ -134,16 +149,14 @@ Write-Host "The Driver Date is: $SystemWifiDriverDate" -ForegroundColor DarkGray
 
 ### GET BEST ROUTE IP CONFIGURATION DETAILS
 
-$NextHop =  Test-NetConnection 8.8.8.8  -DiagnoseRouting
-$DefaultIfIndex = $NextHop.OutgoingInterfaceIndex
-$DefaultInterface = $NextHop.OutgoingInterfaceAlias
+
 
 
 ### SETTING UP STANDARD VARIABLE FOR OUTPUT AS REQUIRED. DO NOT EDIT THESE VARIABLES.
 
 $IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
 
-$InterfacesUp = (Get-NetIPConfiguration | where{ $_.NetAdapter.Status -eq 'UP'}).InterfaceAlias
+$InterfacesUp = @($IPDetails.InterfaceAlias)
 $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
 $DNSServers = $IPDetails.DNSServer | Where-Object {$_.AddressFamily -eq '2'}
 $DNSs = $DNSServers.ServerAddresses
@@ -151,8 +164,9 @@ $domain = (Get-WmiObject win32_computersystem).Domain
 $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.220).IPAddress
 
 
-################################################# WIFI INFORMATION #################################################
+######################################### WIFI / ETHERNET INFORMATION #########################################
 
+if ($ActiveConnectionType -eq 'WiFi') {
 # Uses $DefaultIfIndex from NETWORK INTERFACE PREPARATION above.
 # Native WLAN data is independent of the Windows display language.
 
@@ -339,6 +353,22 @@ namespace Netshoot {
 } catch {
     Write-Warning "WiFi information unavailable: $($_.Exception.Message)"
 }
+}
+if ($ActiveConnectionType -eq 'Ethernet') {
+    Write-Host "`nEthernet Information...`n" -ForegroundColor DarkGray
+    $EthernetMac = $ActiveAdapter.MacAddress -replace '-', ':'
+    if ([string]::IsNullOrWhiteSpace($EthernetMac)) { $EthernetMac = 'Unavailable' }
+    $EthernetState = if ($ActiveAdapter.MediaConnectState -eq 1) { 'Connected' } elseif ($ActiveAdapter.MediaConnectState -eq 2) { 'Disconnected' } else { 'Unknown' }
+    $EthernetDuplex = switch ($ActiveAdapter.MediaDuplexState) { 1 { 'Half duplex' } 2 { 'Full duplex' } default { 'Unknown' } }
+    $EthernetRx = if ($ActiveAdapter.ReceiveLinkSpeed -gt 0) { [math]::Round($ActiveAdapter.ReceiveLinkSpeed / 1000000.0, 2).ToString() + ' Mbps' } else { 'Unavailable' }
+    $EthernetTx = if ($ActiveAdapter.TransmitLinkSpeed -gt 0) { [math]::Round($ActiveAdapter.TransmitLinkSpeed / 1000000.0, 2).ToString() + ' Mbps' } else { 'Unavailable' }
+    Write-Host "The adapter mac address is: $EthernetMac" -ForegroundColor DarkGray
+    Write-Host "The Link State is: $EthernetState" -ForegroundColor DarkGray
+    Write-Host "The Duplex Mode is: $EthernetDuplex" -ForegroundColor DarkGray
+    Write-Host "The Receive Rate is: $EthernetRx" -ForegroundColor DarkGray
+    Write-Host "The Transmit Rate is: $EthernetTx" -ForegroundColor DarkGray
+}
+
 ####################################################################################################################
 
 
@@ -615,8 +645,9 @@ Remove-Item -Path .\ts.ps1
 Write-Host   "`nNetwork Connectivity Tests Completed...`n" -ForegroundColor DarkGray
 
 
-############################################### COLLECTING WIFI LOGS ###############################################
+######################################### COLLECTING WIFI / ETHERNET LOGS #########################################
 
+if ($ActiveConnectionType -eq 'WiFi') {
 Write-Host "`nCollecting WiFi Logs...`n" -ForegroundColor DarkGray
 
 try {
@@ -675,6 +706,75 @@ catch {
         Write-Warning "Could not read WiFi events: $($_.Exception.Message)"
     }
 }
+}
+if ($ActiveConnectionType -eq 'Ethernet') {
+    Write-Host "`nCollecting Ethernet Logs...`n" -ForegroundColor DarkGray
+    # Require the current adapter identity. Do not attribute every System or
+    # NetworkProfile event to Ethernet merely because Ethernet is active now.
+    $EthernetIdentifiers = @(
+        [string]$ActiveAdapter.InterfaceGuid
+        [string]$ActiveAdapter.PnPDeviceID
+        [string]$ActiveAdapter.InterfaceDescription
+    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+        ForEach-Object { $_.Trim().Trim('{', '}') }
+    $EthernetLogEnd = Get-Date
+    $EthernetEvents = @(
+        foreach ($EthernetLog in @('Microsoft-Windows-Wired-AutoConfig/Operational', 'System', 'Microsoft-Windows-NetworkProfile/Operational')) {
+            try {
+                Get-WinEvent -FilterHashtable @{
+                    LogName = $EthernetLog
+                    StartTime = $EthernetLogEnd.AddHours(-24)
+                    EndTime = $EthernetLogEnd
+                } -ErrorAction Stop | Where-Object {
+                    $EthernetEvent = $_
+                    $EthernetMatches = $false
+                    try {
+                        $EthernetXml = [xml]$EthernetEvent.ToXml()
+                        $EthernetValues = @($EthernetXml.SelectNodes('//*[local-name()="EventData"]/* | //*[local-name()="UserData"]//*[not(*)]') | ForEach-Object { $_.InnerText })
+                        $EthernetValues += [string]$EthernetEvent.Message
+                        foreach ($EthernetIdentity in $EthernetIdentifiers) {
+                            foreach ($EthernetValue in $EthernetValues) {
+                                if ($EthernetValue.IndexOf($EthernetIdentity, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                                    $EthernetMatches = $true
+                                    break
+                                }
+                            }
+                            if ($EthernetMatches) { break }
+                        }
+                    } catch { }
+                    $EthernetMatches
+                }
+            } catch {
+                if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') {
+                    Write-Host "Log unavailable: $EthernetLog - $($_.Exception.Message)" -ForegroundColor DarkGray
+                }
+            }
+        }
+    ) | Sort-Object TimeCreated
+    $EthernetEvents = @($EthernetEvents)
+    Write-Host "Ethernet Events - Last 24 Hours...`n" -ForegroundColor DarkGray
+    if ($EthernetEvents.Count -gt 0) {
+        $EthernetSummary = $EthernetEvents | Select-Object @{
+            Name='Date and Time'; Expression={$_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss')}
+        }, Id, @{Name='Level';Expression={$_.LevelDisplayName}}, ProviderName, @{
+            Name='Message';Expression={($_.Message -split '\r?\n')[0]}
+        } | Format-Table -AutoSize -Wrap | Out-String
+        Write-Host ([regex]::Replace($EthernetSummary, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
+    } else {
+        Write-Host 'No events identifying this Ethernet adapter were found in the accessible logs.' -ForegroundColor DarkGray
+    }
+    Write-Host "`nEthernet Errors and Warnings - Full Details...`n" -ForegroundColor DarkGray
+    $EthernetIssues = @($EthernetEvents | Where-Object { $_.Level -in @(1,2,3) })
+    if ($EthernetIssues.Count -gt 0) {
+        $EthernetDetails = $EthernetIssues | Format-List TimeCreated, Id, ProviderName, LevelDisplayName, Message | Out-String
+        Write-Host ([regex]::Replace($EthernetDetails, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
+    } else {
+        Write-Host 'No critical events, errors or warnings identifying this adapter were found in the accessible logs.' -ForegroundColor DarkGray
+    }
+    Write-Host "`nEvents without an adapter identifier are omitted. Wired-AutoConfig mainly covers wired authentication." -ForegroundColor DarkGray
+}
+
+
 
 
 
