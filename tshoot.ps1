@@ -385,6 +385,7 @@ Write-Host "The RAM usage is: $RAM GB" -ForegroundColor DarkGray
 
 
 ################################################## STARTING TESTS ##################################################
+
 Write-Host "`nStarting Tests...`n" -ForegroundColor DarkGray
 
 # TRACEROUTE PING TEST
@@ -826,7 +827,10 @@ namespace Netshoot {
                         dialog.AddExtension = true;
                         dialog.OverwritePrompt = true;
                         dialog.CheckPathExists = true;
-                        dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                        dialog.InitialDirectory = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                            "Downloads"
+                        );
                         using (Form owner = new Form()) {
                             owner.Text = "Save Network Test Report";
                             owner.StartPosition = FormStartPosition.CenterScreen;
