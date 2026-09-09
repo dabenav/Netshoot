@@ -600,7 +600,6 @@ Remove-Item -Path .\ts.ps1
 
 Write-Host   "`nNetwork Connectivity Tests Completed`n" -ForegroundColor DarkGray
 
-
 ####################################### WiFi Logs ########################################
 
 Write-Host "`nCollecting WiFi Logs -----`n" -ForegroundColor DarkGray
@@ -630,7 +629,7 @@ try {
             Expression = { ($_.Message -split '\r?\n')[0] }
         } |
         Format-Table -AutoSize -Wrap |
-        Out-Host
+        Out-String -Stream | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray }
 
     $WiFiIssues = @(
         $WiFiEvents | Where-Object { $_.Level -in @(1, 2, 3) }
@@ -641,7 +640,7 @@ try {
     if ($WiFiIssues.Count -gt 0) {
         $WiFiIssues |
             Format-List TimeCreated, Id, LevelDisplayName, Message |
-            Out-Host
+            Out-String -Stream | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray }
     }
     else {
         Write-Host 'No critical events, errors or warnings were found.' -ForegroundColor DarkGray
