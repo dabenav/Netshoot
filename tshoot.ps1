@@ -697,7 +697,7 @@ catch {
 
             Add-Type -AssemblyName System.Drawing -ErrorAction Stop
             Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
-            if (-not ('Netshoot.PdfReportV1' -as [type])) {
+            if (-not ('Netshoot.PdfReportV2' -as [type])) {
                 Add-Type -ReferencedAssemblies System.Drawing, System.Windows.Forms -ErrorAction Stop -TypeDefinition @'
 using System;
 using System.Collections.Generic;
@@ -713,7 +713,7 @@ using System.Windows.Forms;
 namespace Netshoot {
     // Render Unicode text with Windows fonts and embed pages in a real PDF.
     // No browser, Office installation, printer driver or downloaded library is required.
-    public static class PdfReportV1 {
+    public static class PdfReportV2 {
         static void Put(Stream stream, string text) {
             byte[] bytes = Encoding.ASCII.GetBytes(text);
             stream.Write(bytes, 0, bytes.Length);
@@ -827,7 +827,23 @@ namespace Netshoot {
                         dialog.OverwritePrompt = true;
                         dialog.CheckPathExists = true;
                         dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                        if (dialog.ShowDialog() == DialogResult.OK) selected = dialog.FileName;
+                        using (Form owner = new Form()) {
+                            owner.Text = "Save Network Test Report";
+                            owner.StartPosition = FormStartPosition.CenterScreen;
+                            owner.Size = new Size(1, 1);
+                            owner.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+                            owner.ShowInTaskbar = true;
+                            owner.TopMost = true;
+                            owner.Opacity = 0;
+                            owner.Show();
+                            owner.Activate();
+                            try { System.Media.SystemSounds.Exclamation.Play(); } catch { }
+                            try {
+                                if (dialog.ShowDialog(owner) == DialogResult.OK) selected = dialog.FileName;
+                            } finally {
+                                owner.Close();
+                            }
+                        }
                     }
                 } catch (Exception error) { failure = error; }
             });
@@ -841,9 +857,9 @@ namespace Netshoot {
 }
 '@
             }
-            [Netshoot.PdfReportV1]::Create($DiagnosticReportText, $DiagnosticReportTemp + '.pdf')
+            [Netshoot.PdfReportV2]::Create($DiagnosticReportText, $DiagnosticReportTemp + '.pdf')
             Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -ErrorAction SilentlyContinue
-            $DiagnosticReportTarget = [Netshoot.PdfReportV1]::ChoosePath($DiagnosticReportName)
+            $DiagnosticReportTarget = [Netshoot.PdfReportV2]::ChoosePath($DiagnosticReportName)
             if (-not [string]::IsNullOrWhiteSpace($DiagnosticReportTarget)) {
                 Copy-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -Destination $DiagnosticReportTarget -Force -ErrorAction Stop
                 Remove-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -ErrorAction SilentlyContinue
