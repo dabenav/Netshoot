@@ -602,7 +602,7 @@ Write-Host   "`nNetwork Connectivity Tests Completed`n" -ForegroundColor DarkGra
 
 ####################################### WiFi Logs ########################################
 
-Write-Host "`nCollecting WiFi Logs -----`n" -ForegroundColor DarkGray
+Write-Host "Collecting WiFi Logs... `n" -ForegroundColor DarkGray
 
 try {
     $WiFiLogEndTime = Get-Date
