@@ -65,7 +65,7 @@ $WindowsVersion = if ($WindowsInfo) {
     'Unavailable'
 }
 
-Write-Host "`nSystem Information.....`n" -ForegroundColor DarkGray
+Write-Host "`nSystem Information...`n" -ForegroundColor DarkGray
 
 Write-Host "The Date and Time is: $TestDateTime" -ForegroundColor DarkGray
 Write-Host "The Computer Name is: $ComputerName" -ForegroundColor DarkGray
