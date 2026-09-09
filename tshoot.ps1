@@ -698,7 +698,7 @@ catch {
 
             Add-Type -AssemblyName System.Drawing -ErrorAction Stop
             Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
-            if (-not ('Netshoot.PdfReportV2' -as [type])) {
+            if (-not ('Netshoot.PdfReportV3' -as [type])) {
                 Add-Type -ReferencedAssemblies System.Drawing, System.Windows.Forms -ErrorAction Stop -TypeDefinition @'
 using System;
 using System.Collections.Generic;
@@ -714,7 +714,25 @@ using System.Windows.Forms;
 namespace Netshoot {
     // Render Unicode text with Windows fonts and embed pages in a real PDF.
     // No browser, Office installation, printer driver or downloaded library is required.
-    public static class PdfReportV2 {
+    public static class PdfReportV3 {
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        struct FLASHWINFO {
+            public uint cbSize;
+            public IntPtr hwnd;
+            public uint dwFlags, uCount, dwTimeout;
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
+        static extern bool FlashWindowEx(ref FLASHWINFO info);
+        static void FlashReportWindow(IntPtr window, bool start) {
+            FLASHWINFO info = new FLASHWINFO();
+            info.cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(FLASHWINFO));
+            info.hwnd = window;
+            info.dwFlags = start ? 0x0000000Eu : 0u; // Taskbar, until foreground; or stop.
+            info.uCount = start ? UInt32.MaxValue : 0;
+            info.dwTimeout = 0;
+            FlashWindowEx(ref info);
+        }
         static void Put(Stream stream, string text) {
             byte[] bytes = Encoding.ASCII.GetBytes(text);
             stream.Write(bytes, 0, bytes.Length);
@@ -832,21 +850,38 @@ namespace Netshoot {
                             "Downloads"
                         );
                         using (Form owner = new Form()) {
-                            owner.Text = "Save Network Test Report";
+                            owner.Text = "Network Diagnostic Completed";
                             owner.StartPosition = FormStartPosition.CenterScreen;
-                            owner.Size = new Size(1, 1);
-                            owner.FormBorderStyle = FormBorderStyle.FixedToolWindow;
+                            owner.ClientSize = new Size(480, 160);
+                            owner.FormBorderStyle = FormBorderStyle.FixedDialog;
+                            owner.MaximizeBox = false;
+                            owner.MinimizeBox = false;
                             owner.ShowInTaskbar = true;
                             owner.TopMost = true;
-                            owner.Opacity = 0;
-                            owner.Show();
-                            owner.Activate();
-                            try { System.Media.SystemSounds.Exclamation.Play(); } catch { }
-                            try {
-                                if (dialog.ShowDialog(owner) == DialogResult.OK) selected = dialog.FileName;
-                            } finally {
-                                owner.Close();
-                            }
+                            owner.Icon = SystemIcons.Information;
+                            Label message = new Label();
+                            message.Text = "Diagn\u00f3stico terminado.\r\nHaz clic en Aceptar para elegir d\u00f3nde guardar el PDF.";
+                            message.SetBounds(24, 25, 432, 65);
+                            owner.Controls.Add(message);
+                            Button accept = new Button();
+                            accept.Text = "Aceptar";
+                            accept.SetBounds(350, 108, 105, 30);
+                            owner.Controls.Add(accept);
+                            owner.AcceptButton = accept;
+                            owner.Shown += delegate {
+                                try { System.Media.SystemSounds.Exclamation.Play(); } catch { }
+                                FlashReportWindow(owner.Handle, true);
+                            };
+                            owner.Activated += delegate { FlashReportWindow(owner.Handle, false); };
+                            accept.Click += delegate {
+                                FlashReportWindow(owner.Handle, false);
+                                try {
+                                    if (dialog.ShowDialog(owner) == DialogResult.OK) selected = dialog.FileName;
+                                } catch (Exception error) { failure = error; }
+                                finally { owner.Close(); }
+                            };
+                            owner.FormClosing += delegate { FlashReportWindow(owner.Handle, false); };
+                            owner.ShowDialog();
                         }
                     }
                 } catch (Exception error) { failure = error; }
@@ -861,9 +896,9 @@ namespace Netshoot {
 }
 '@
             }
-            [Netshoot.PdfReportV2]::Create($DiagnosticReportText, $DiagnosticReportTemp + '.pdf')
+            [Netshoot.PdfReportV3]::Create($DiagnosticReportText, $DiagnosticReportTemp + '.pdf')
             Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -ErrorAction SilentlyContinue
-            $DiagnosticReportTarget = [Netshoot.PdfReportV2]::ChoosePath($DiagnosticReportName)
+            $DiagnosticReportTarget = [Netshoot.PdfReportV3]::ChoosePath($DiagnosticReportName)
             if (-not [string]::IsNullOrWhiteSpace($DiagnosticReportTarget)) {
                 Copy-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -Destination $DiagnosticReportTarget -Force -ErrorAction Stop
                 Remove-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -ErrorAction SilentlyContinue
