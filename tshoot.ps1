@@ -541,7 +541,7 @@ foreach ($tsite in $PublicSites)
 
 ################################################ RUNNING SPEED TEST ################################################
 
-Write-Host "`nRunning Speed Test..." -ForegroundColor DarkGray
+Write-Host "`nRunning Speed Tests..." -ForegroundColor DarkGray
 
 $ScriptDirectory = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 $SpeedTestPath = Join-Path $ScriptDirectory "speedtest.exe"
