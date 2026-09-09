@@ -14,6 +14,48 @@ $PublicDNS = "8.8.8.8"
 $PublicSites = "cisco.com"
 $pingCount = 8
 
+####################################### System Information ########################################
+
+$TestDateTime = Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz'
+$ComputerName = $env:COMPUTERNAME
+
+$ComputerInfo = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue
+$BiosInfo = Get-CimInstance -ClassName Win32_BIOS -ErrorAction SilentlyContinue
+$WindowsInfo = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
+
+$SerialNumber = if ([string]::IsNullOrWhiteSpace($BiosInfo.SerialNumber)) {
+    'Unavailable'
+} else {
+    $BiosInfo.SerialNumber.Trim()
+}
+
+$Manufacturer = if ([string]::IsNullOrWhiteSpace($ComputerInfo.Manufacturer)) {
+    'Unavailable'
+} else {
+    $ComputerInfo.Manufacturer.Trim()
+}
+
+$Model = if ([string]::IsNullOrWhiteSpace($ComputerInfo.Model)) {
+    'Unavailable'
+} else {
+    $ComputerInfo.Model.Trim()
+}
+
+$WindowsVersion = if ($WindowsInfo) {
+    "$($WindowsInfo.Caption) (Version $($WindowsInfo.Version), Build $($WindowsInfo.BuildNumber))"
+} else {
+    'Unavailable'
+}
+
+Write-Host "`nSystem Information.....`n" -ForegroundColor DarkGray
+
+Write-Host "The Date and Time is: $TestDateTime" -ForegroundColor DarkGray
+Write-Host "The Computer Name is: $ComputerName" -ForegroundColor DarkGray
+Write-Host "The Serial Number is: $SerialNumber" -ForegroundColor DarkGray
+Write-Host "The Manufacturer is: $Manufacturer" -ForegroundColor DarkGray
+Write-Host "The Model is: $Model" -ForegroundColor DarkGray
+Write-Host "The Windows Version is: $WindowsVersion" -ForegroundColor DarkGray
+
 
 ########################## Get Interface Name Information ###############################
 
