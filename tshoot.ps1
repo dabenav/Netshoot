@@ -1,11 +1,12 @@
-####################################################################################################################
-#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)
-#  Name: Network Troubleshooting Script
-#  Task: To verify the network connectivity performance and errors
-#  By: Daniel Benavides
-####################################################################################################################
+########################################################################
+#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                  #
+#  Name: Network Troubleshooting Script                                #
+#  Task: To verify the network connectivity performance and errors     #
+#  By: Daniel Benavides                                                #
+########################################################################
 
-####################################### PDF Report Capture ########################################
+
+################################################ PDF REPORT CAPTURE ################################################
 
 $DiagnosticReportStamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
 $DiagnosticReportName = "$env:COMPUTERNAME-$DiagnosticReportStamp.pdf"
@@ -23,16 +24,19 @@ try {
 try {
 
 
-Write-Host "`nStarting Network Connectivity test....." -ForegroundColor DarkGray
+######################################## STARTING NETWORK CONNECTIVITY TEST ########################################
+
+Write-Host "`nStarting Network Connectivity Test..." -ForegroundColor DarkGray
 
 
-########################## Edit these variables as needed ###############################
+### CONFIGURATION  
 
 $PublicDNS = "8.8.8.8"
 $PublicSites = "cisco.com"
 $pingCount = 8
 
-####################################### System Information ########################################
+
+################################################ SYSTEM INFORMATION ################################################
 
 $TestDateTime = Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz'
 $ComputerName = $env:COMPUTERNAME
@@ -65,7 +69,7 @@ $WindowsVersion = if ($WindowsInfo) {
     'Unavailable'
 }
 
-Write-Host "`nSystem Information.....`n" -ForegroundColor DarkGray
+Write-Host "`nSystem Information...`n" -ForegroundColor DarkGray
 
 Write-Host "The Date and Time is: $TestDateTime" -ForegroundColor DarkGray
 Write-Host "The Computer Name is: $ComputerName" -ForegroundColor DarkGray
@@ -126,20 +130,16 @@ Write-Host "The Driver Date is: $SystemWifiDriverDate" -ForegroundColor DarkGray
 
 
 
-########################## Get Interface Name Information ###############################
+########################################## NETWORK INTERFACE PREPARATION  ##########################################
 
-Write-Host "`nCollecting Information.....`n" -ForegroundColor DarkGray
-
-### Get Best Route IP Configuration details
+### GET BEST ROUTE IP CONFIGURATION DETAILS
 
 $NextHop =  Test-NetConnection 8.8.8.8  -DiagnoseRouting
 $DefaultIfIndex = $NextHop.OutgoingInterfaceIndex
 $DefaultInterface = $NextHop.OutgoingInterfaceAlias
 
-Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
 
-
-# Setting up standard variable for output as required. Do not edit these variables.
+### SETTING UP STANDARD VARIABLE FOR OUTPUT AS REQUIRED. DO NOT EDIT THESE VARIABLES.
 
 $IPDetails = Get-NetIPConfiguration | where{ ($_.InterfaceIndex -eq $DefaultIfIndex)}
 
@@ -151,39 +151,9 @@ $domain = (Get-WmiObject win32_computersystem).Domain
 $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.220).IPAddress
 
 
-### Interfaces UP
+################################################# WIFI INFORMATION #################################################
 
-foreach ($InterfaceUp in $InterfacesUp)
-    {
-    $IfUpDetails = Get-NetIPConfiguration -InterfaceAlias $InterfaceUp
-    $IfUpPrefixOrigin = $IfUpDetails.IPv4Address.PrefixOrigin
-    $IfUpIPAddress = $IfUpDetails.IPv4Address.IPAddress
-    $IfUpPrefixLength = $IfUpDetails.IPv4Address.PrefixLength
-    $IfUpNextHop = $IfUpDetails.IPv4DefaultGateway.NextHop
-
-    Write-Host "Interface $InterfaceUp is UP, $IfUpPrefixOrigin, $IfUpIPAddress/$IfUpPrefixLength $IfUpNextHop" -ForegroundColor DarkGray
-    }
-
-### Print Public IP Address 
-
-Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray`n
-
-
-### Print CPU usage ##
-$cpuAverage = (Get-WmiObject -Class win32_processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average | Select-Object Average).Average
-
-Write-Host "The CPU Average is: $cpuAverage" -ForegroundColor DarkGray
-
-### Print RAM usage ##
-$CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
-$RAM = [math]::Round((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)/1024/1024),2)
-
-Write-Host "The RAM usage is: $RAM GB" -ForegroundColor DarkGray
-
-###############################################################################################################
-####################################### WiFi Settings ########################################
-
-# Requires $DefaultIfIndex from the existing Collecting Information section.
+# Uses $DefaultIfIndex from NETWORK INTERFACE PREPARATION above.
 # Native WLAN data is independent of the Windows display language.
 
 try {
@@ -369,14 +339,55 @@ namespace Netshoot {
 } catch {
     Write-Warning "WiFi information unavailable: $($_.Exception.Message)"
 }
-###############################################################################################################
+####################################################################################################################
 
 
-################################# Tests #####################################
+############################################## COLLECTING INFORMATION ##############################################
 
+Write-Host "`nCollecting Information...`n" -ForegroundColor DarkGray
+
+Write-Host "The default interface is $DefaultInterface" -ForegroundColor DarkGray
+
+### INTERFACES UP
+
+foreach ($InterfaceUp in $InterfacesUp)
+    {
+    $IfUpDetails = Get-NetIPConfiguration -InterfaceAlias $InterfaceUp
+    $IfUpPrefixOrigin = $IfUpDetails.IPv4Address.PrefixOrigin
+    $IfUpIPAddress = $IfUpDetails.IPv4Address.IPAddress
+    $IfUpPrefixLength = $IfUpDetails.IPv4Address.PrefixLength
+    $IfUpNextHop = $IfUpDetails.IPv4DefaultGateway.NextHop
+
+    Write-Host "Interface $InterfaceUp is UP, $IfUpPrefixOrigin, $IfUpIPAddress/$IfUpPrefixLength $IfUpNextHop" -ForegroundColor DarkGray
+    }
+
+### PRINT PUBLIC IP ADDRESS 
+
+Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGray`n
+
+
+### PRINT CPU USAGE
+
+$cpuAverage = (Get-WmiObject -Class win32_processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average | Select-Object Average).Average
+
+Write-Host "The CPU Average is: $cpuAverage" -ForegroundColor DarkGray
+
+
+### PRINT RAM USAGE 
+
+$CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
+$RAM = [math]::Round((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)/1024/1024),2)
+
+Write-Host "The RAM usage is: $RAM GB" -ForegroundColor DarkGray
+
+
+####################################################################################################################
+
+
+################################################## STARTING TESTS ##################################################
 Write-Host "`nStarting Tests...`n" -ForegroundColor DarkGray
 
-# Traceroute ping test
+# TRACEROUTE PING TEST
 
 $TraceRouteTest = Test-NetConnection 8.8.8.8 -TraceRoute -Hops 3 -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 $TraceRouteHops = $TraceRouteTest.TraceRoute
@@ -406,7 +417,7 @@ if (![string]::IsNullOrWhiteSpace($Geteway))
     }
 }
 
-# Test DNS Connectivity
+### TEST DNS CONNECTIVITY
 
 foreach ($DNS in $DNSs)
 {
@@ -428,7 +439,7 @@ foreach ($DNS in $DNSs)
 
 }
 
-# Public DNS Status
+### PUBLIC DNS STATUS
 
 foreach ($PDNS in $PublicDNS)
 {
@@ -451,7 +462,7 @@ foreach ($PDNS in $PublicDNS)
 }
 
 
-# Local Domain Joined Status
+### LOCAL DOMAIN JOINED STATUS
 
 if ($domain -ne "Workgroup")
 {  
@@ -485,7 +496,7 @@ else
 
 
 
-# DNS Resolution test
+### DNS RESOLUTION TEST
 
 foreach ($DNS in $DNSs)
 {
@@ -506,7 +517,7 @@ foreach ($DNS in $DNSs)
  }
  
  
-# Port test to public Sites on port 80 and 443
+### PORT TEST TO PUBLIC SITES ON PORT 80 AND 443
 
 foreach ($tsite in $PublicSites)
 {
@@ -528,9 +539,9 @@ foreach ($tsite in $PublicSites)
 
 
 
-####################################### Speed Test #######################################
+################################################ RUNNING SPEED TEST ################################################
 
-Write-Host "`nRunning Speed Tests..." -ForegroundColor DarkGray
+Write-Host "`nRunning Speed Test..." -ForegroundColor DarkGray
 
 $ScriptDirectory = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
 $SpeedTestPath = Join-Path $ScriptDirectory "speedtest.exe"
@@ -554,7 +565,7 @@ try {
         }
 
         Write-Host ""
-        Write-Host "Speed Test #$TestNumber`n" -ForegroundColor DarkGray
+        Write-Host "Speed Test #$TestNumber...`n" -ForegroundColor DarkGray
 
         $SpeedTestJson = & $SpeedTestPath --accept-license --format=json
 
@@ -593,16 +604,19 @@ finally {
 }
 
 
-####################################### Deleting Files ########################################
+################################################## DELETING FILES ##################################################
 
 Remove-Item -Path .\ts.ps1
 
 
-Write-Host   "`nNetwork Connectivity Tests Completed`n" -ForegroundColor DarkGray
+####################################### NETWORK CONNECTIVITY TESTS COMPLETED #######################################
 
-####################################### WiFi Logs ########################################
+Write-Host   "`nNetwork Connectivity Tests Completed...`n" -ForegroundColor DarkGray
 
-Write-Host "Collecting WiFi Logs... `n" -ForegroundColor DarkGray
+
+############################################### COLLECTING WIFI LOGS ###############################################
+
+Write-Host "`nCollecting WiFi Logs...`n" -ForegroundColor DarkGray
 
 try {
     $WiFiLogEndTime = Get-Date
@@ -615,7 +629,8 @@ try {
         Sort-Object TimeCreated
     )
 
-    Write-Host "WiFi Events - Last 24 Hours`n" -ForegroundColor DarkGray
+    # WIFI EVENTS - LAST 24 HOURS
+    Write-Host "WiFi Events - Last 24 Hours...`n" -ForegroundColor DarkGray
 
     $WiFiSummaryText = $WiFiEvents |
         Select-Object @{
@@ -637,7 +652,8 @@ try {
         $WiFiEvents | Where-Object { $_.Level -in @(1, 2, 3) }
     )
 
-    Write-Host "`nWiFi Errors and Warnings - Full Details`n" -ForegroundColor DarkGray
+    # WIFI ERRORS AND WARNINGS - FULL DETAILS
+    Write-Host "`nWiFi Errors and Warnings - Full Details...`n" -ForegroundColor DarkGray
 
     if ($WiFiIssues.Count -gt 0) {
         $WiFiDetailsText = $WiFiIssues |
@@ -661,9 +677,7 @@ catch {
 
 
 
-
-####################################### Saving Output ########################################
-
+################################################## SAVING OUTPUT  ##################################################
 
 } catch {
     Write-Warning "Diagnostic stopped: $($_.Exception.Message)"
@@ -673,7 +687,7 @@ catch {
             Stop-Transcript -ErrorAction Stop | Out-Null
             $DiagnosticReportText = [IO.File]::ReadAllText($DiagnosticReportTemp + '.log')
             # Keep diagnostic output; omit the localized transcript header/footer.
-            $DiagnosticReportFirst = $DiagnosticReportText.IndexOf('Starting Network Connectivity test.....')
+            $DiagnosticReportFirst = $DiagnosticReportText.IndexOf('Starting Network Connectivity Test...')
             if ($DiagnosticReportFirst -ge 0) {
                 $DiagnosticReportText = $DiagnosticReportText.Substring($DiagnosticReportFirst)
                 $DiagnosticReportText = [regex]::Split(
@@ -847,4 +861,4 @@ namespace Netshoot {
 }
 
 
-########################################### END ###############################################
+####################################################### END  #######################################################
