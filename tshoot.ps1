@@ -65,7 +65,7 @@ $WindowsVersion = if ($WindowsInfo) {
     'Unavailable'
 }
 
-Write-Host "`nSystem Information...`n" -ForegroundColor DarkGray
+Write-Host "`nSystem Information.....`n" -ForegroundColor DarkGray
 
 Write-Host "The Date and Time is: $TestDateTime" -ForegroundColor DarkGray
 Write-Host "The Computer Name is: $ComputerName" -ForegroundColor DarkGray
@@ -631,7 +631,7 @@ try {
         Format-Table -AutoSize -Wrap |
         Out-String
 
-    Write-Host ([regex]::Replace($WiFiSummaryText, '\x1B\[[0-9;:]*m', '')) -ForegroundColor DarkGray
+    Write-Host ([regex]::Replace($WiFiSummaryText, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
 
     $WiFiIssues = @(
         $WiFiEvents | Where-Object { $_.Level -in @(1, 2, 3) }
@@ -644,7 +644,7 @@ try {
             Format-List TimeCreated, Id, LevelDisplayName, Message |
             Out-String
 
-        Write-Host ([regex]::Replace($WiFiDetailsText, '\x1B\[[0-9;:]*m', '')) -ForegroundColor DarkGray
+        Write-Host ([regex]::Replace($WiFiDetailsText, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
     }
     else {
         Write-Host 'No critical events, errors or warnings were found.' -ForegroundColor DarkGray
