@@ -1,5 +1,5 @@
 ########################################################################
-#  Date: 10 Sep 2026 11:08:30 -05:00 (America/Bogota)                  #
+#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                  #
 #  Name: Network Troubleshooting Script                                #
 #  Task: To verify the network connectivity performance and errors     #
 #  By: Daniel Benavides                                                #
@@ -11,6 +11,8 @@
 $DiagnosticReportStamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
 $DiagnosticReportName = "$env:COMPUTERNAME-$DiagnosticReportStamp.txt"
 $DiagnosticUploadUri = 'http://150.136.170.102/upload'
+$DiagnosticUploadUsername = 'flexvity'
+$DiagnosticUploadPassword = 'flexvity'
 $DiagnosticReportTemp = Join-Path ([IO.Path]::GetTempPath()) (
     'NetworkDiagnostic-' + [guid]::NewGuid().ToString('N')
 )
@@ -599,7 +601,7 @@ try {
         Write-Host ""
         Write-Host "Speed Test #$TestNumber...`n" -ForegroundColor DarkGray
 
-        $SpeedTestJson = & $SpeedTestPath --accept-license --format=json
+        $SpeedTestJson = & $SpeedTestPath --accept-license --format=json 2>$null
 
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($SpeedTestJson)) {
             throw "Speed Test #$TestNumber did not return a valid result."
@@ -649,8 +651,6 @@ Write-Host   "`nNetwork Connectivity Tests Completed...`n" -ForegroundColor Dark
 ######################################### COLLECTING WIFI / ETHERNET LOGS #########################################
 
 if ($ActiveConnectionType -eq 'WiFi') {
-Write-Host "`nCollecting WiFi Logs...`n" -ForegroundColor DarkGray
-
 try {
     $WiFiLogEndTime = Get-Date
     $WiFiEvents = @(
@@ -662,54 +662,47 @@ try {
         Sort-Object TimeCreated
     )
 
-    # WIFI EVENTS - LAST 24 HOURS
-    Write-Host "WiFi Events - Last 24 Hours...`n" -ForegroundColor DarkGray
+    if ($WiFiEvents.Count -gt 0) {
+        Write-Host "`nCollecting WiFi Logs...`n" -ForegroundColor DarkGray
+        Write-Host "WiFi Events - Last 24 Hours...`n" -ForegroundColor DarkGray
 
-    $WiFiSummaryText = $WiFiEvents |
-        Select-Object @{
-            Name = 'Date and Time'
-            Expression = { $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss') }
-        }, Id, @{
-            Name = 'Level'
-            Expression = { $_.LevelDisplayName }
-        }, @{
-            Name = 'Message'
-            Expression = { ($_.Message -split '\r?\n')[0] }
-        } |
-        Format-Table -AutoSize -Wrap |
-        Out-String
-
-    Write-Host ([regex]::Replace($WiFiSummaryText, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
-
-    $WiFiIssues = @(
-        $WiFiEvents | Where-Object { $_.Level -in @(1, 2, 3) }
-    )
-
-    # WIFI ERRORS AND WARNINGS - FULL DETAILS
-    Write-Host "`nWiFi Errors and Warnings - Full Details...`n" -ForegroundColor DarkGray
-
-    if ($WiFiIssues.Count -gt 0) {
-        $WiFiDetailsText = $WiFiIssues |
-            Format-List TimeCreated, Id, LevelDisplayName, Message |
+        $WiFiSummaryText = $WiFiEvents |
+            Select-Object @{
+                Name = 'Date and Time'
+                Expression = { $_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss') }
+            }, Id, @{
+                Name = 'Level'
+                Expression = { $_.LevelDisplayName }
+            }, @{
+                Name = 'Message'
+                Expression = { ($_.Message -split '\r?\n')[0] }
+            } |
+            Format-Table -AutoSize -Wrap |
             Out-String
 
-        Write-Host ([regex]::Replace($WiFiDetailsText, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
-    }
-    else {
-        Write-Host 'No critical events, errors or warnings were found.' -ForegroundColor DarkGray
+        Write-Host ([regex]::Replace($WiFiSummaryText, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
+
+        $WiFiIssues = @(
+            $WiFiEvents | Where-Object { $_.Level -in @(1, 2, 3) }
+        )
+
+        if ($WiFiIssues.Count -gt 0) {
+            Write-Host "`nWiFi Errors and Warnings - Full Details...`n" -ForegroundColor DarkGray
+            $WiFiDetailsText = $WiFiIssues |
+                Format-List TimeCreated, Id, LevelDisplayName, Message |
+                Out-String
+
+            Write-Host ([regex]::Replace($WiFiDetailsText, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
+        }
     }
 }
 catch {
-    if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') {
-        Write-Host 'No WiFi events were found in the last 24 hours.' -ForegroundColor DarkGray
-    }
-    else {
+    if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') {
         Write-Warning "Could not read WiFi events: $($_.Exception.Message)"
     }
 }
 }
 if ($ActiveConnectionType -eq 'Ethernet') {
-    Write-Host "`nCollecting Ethernet Logs...`n" -ForegroundColor DarkGray
     # Require the current adapter identity. Do not attribute every System or
     # NetworkProfile event to Ethernet merely because Ethernet is active now.
     $EthernetIdentifiers = @(
@@ -753,26 +746,23 @@ if ($ActiveConnectionType -eq 'Ethernet') {
         }
     ) | Sort-Object TimeCreated
     $EthernetEvents = @($EthernetEvents)
-    Write-Host "Ethernet Events - Last 24 Hours...`n" -ForegroundColor DarkGray
     if ($EthernetEvents.Count -gt 0) {
+        Write-Host "`nCollecting Ethernet Logs...`n" -ForegroundColor DarkGray
+        Write-Host "Ethernet Events - Last 24 Hours...`n" -ForegroundColor DarkGray
         $EthernetSummary = $EthernetEvents | Select-Object @{
             Name='Date and Time'; Expression={$_.TimeCreated.ToString('yyyy-MM-dd HH:mm:ss')}
         }, Id, @{Name='Level';Expression={$_.LevelDisplayName}}, ProviderName, @{
             Name='Message';Expression={($_.Message -split '\r?\n')[0]}
         } | Format-Table -AutoSize -Wrap | Out-String
         Write-Host ([regex]::Replace($EthernetSummary, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
-    } else {
-        Write-Host 'No events identifying this Ethernet adapter were found in the accessible logs.' -ForegroundColor DarkGray
+
+        $EthernetIssues = @($EthernetEvents | Where-Object { $_.Level -in @(1,2,3) })
+        if ($EthernetIssues.Count -gt 0) {
+            Write-Host "`nEthernet Errors and Warnings - Full Details...`n" -ForegroundColor DarkGray
+            $EthernetDetails = $EthernetIssues | Format-List TimeCreated, Id, ProviderName, LevelDisplayName, Message | Out-String
+            Write-Host ([regex]::Replace($EthernetDetails, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
+        }
     }
-    Write-Host "`nEthernet Errors and Warnings - Full Details...`n" -ForegroundColor DarkGray
-    $EthernetIssues = @($EthernetEvents | Where-Object { $_.Level -in @(1,2,3) })
-    if ($EthernetIssues.Count -gt 0) {
-        $EthernetDetails = $EthernetIssues | Format-List TimeCreated, Id, ProviderName, LevelDisplayName, Message | Out-String
-        Write-Host ([regex]::Replace($EthernetDetails, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
-    } else {
-        Write-Host 'No critical events, errors or warnings identifying this adapter were found in the accessible logs.' -ForegroundColor DarkGray
-    }
-    Write-Host "`nEvents without an adapter identifier are omitted. Wired-AutoConfig mainly covers wired authentication." -ForegroundColor DarkGray
 }
 
 
@@ -801,8 +791,14 @@ if ($ActiveConnectionType -eq 'Ethernet') {
 
             try {
                 $DiagnosticReportBytes = [Text.Encoding]::UTF8.GetBytes($DiagnosticReportText)
+                $DiagnosticBasicToken = [Convert]::ToBase64String(
+                    [Text.Encoding]::ASCII.GetBytes(
+                        "$DiagnosticUploadUsername`:$DiagnosticUploadPassword"
+                    )
+                )
                 $DiagnosticUploadHeaders = @{
                     'X-File-Name' = $DiagnosticReportName
+                    'Authorization' = "Basic $DiagnosticBasicToken"
                 }
 
                 $DiagnosticUploadResponse = Invoke-WebRequest `
@@ -819,8 +815,8 @@ if ($ActiveConnectionType -eq 'Ethernet') {
                 Write-Host "Por favor, envíe este código al Departamento de Soporte: $DiagnosticReportName" -ForegroundColor Gray
             }
             catch {
-                Write-Warning "The text report could not be sent to $DiagnosticUploadUri`: $($_.Exception.Message)"
-                Write-Host "Report code (not uploaded): $DiagnosticReportName" -ForegroundColor DarkGray
+                Write-Warning "No fue posible enviar el reporte de texto al servidor: $($_.Exception.Message)"
+                Write-Host "Código del reporte (no enviado): $DiagnosticReportName" -ForegroundColor DarkGray
             }
 
         } catch {
