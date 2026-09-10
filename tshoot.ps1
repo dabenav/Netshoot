@@ -791,37 +791,61 @@ if ($ActiveConnectionType -eq 'Ethernet') {
 
             try {
                 $DiagnosticReportBytes = [Text.Encoding]::UTF8.GetBytes($DiagnosticReportText)
+                $DiagnosticPcName = ($env:COMPUTERNAME -replace '[^A-Za-z0-9_-]', '_')
+                if ([string]::IsNullOrWhiteSpace($DiagnosticPcName)) {
+                    $DiagnosticPcName = 'UNKNOWN-PC'
+                }
+                if ($DiagnosticPcName.Length -gt 64) {
+                    $DiagnosticPcName = $DiagnosticPcName.Substring(0, 64)
+                }
+
                 $DiagnosticBasicToken = [Convert]::ToBase64String(
                     [Text.Encoding]::ASCII.GetBytes(
                         "$DiagnosticUploadUsername`:$DiagnosticUploadPassword"
                     )
                 )
                 $DiagnosticUploadHeaders = @{
-                    'X-File-Name' = $DiagnosticReportName
                     'Authorization' = "Basic $DiagnosticBasicToken"
+                    'X-PC-Name' = $DiagnosticPcName
                 }
 
-                $DiagnosticUploadResponse = Invoke-WebRequest `
+                $DiagnosticUploadResponse = Invoke-RestMethod `
                     -Uri $DiagnosticUploadUri `
                     -Method Post `
                     -Headers $DiagnosticUploadHeaders `
                     -Body $DiagnosticReportBytes `
                     -ContentType 'text/plain; charset=utf-8' `
-                    -UseBasicParsing `
                     -TimeoutSec 120 `
                     -ErrorAction Stop
 
+                $UploadedReportName = [string]$DiagnosticUploadResponse.archivo
+                if ([string]::IsNullOrWhiteSpace($UploadedReportName)) {
+                    throw 'El servidor no devolvio el nombre del archivo guardado.'
+                }
+
                 Write-Host "`nEl reporte de texto fue enviado correctamente." -ForegroundColor DarkGray
-                Write-Host "Por favor, envíe este código al Departamento de Soporte: $DiagnosticReportName" -ForegroundColor Gray
+                Write-Host "`nPor favor, envie este codigo al Departamento de Soporte: $UploadedReportName" -ForegroundColor Gray
             }
             catch {
                 Write-Warning "No fue posible enviar el reporte de texto al servidor: $($_.Exception.Message)"
-                Write-Host "Código del reporte (no enviado): $DiagnosticReportName" -ForegroundColor DarkGray
+                $DiagnosticErrorDetails = [string]$_.ErrorDetails.Message
+                if (-not [string]::IsNullOrWhiteSpace($DiagnosticErrorDetails)) {
+                    try {
+                        $DiagnosticServerError = $DiagnosticErrorDetails | ConvertFrom-Json -ErrorAction Stop
+                        if (-not [string]::IsNullOrWhiteSpace($DiagnosticServerError.error)) {
+                            Write-Host "Detalle del servidor: $($DiagnosticServerError.error)" -ForegroundColor DarkGray
+                        }
+                    }
+                    catch {
+                        Write-Host "Detalle del servidor: $DiagnosticErrorDetails" -ForegroundColor DarkGray
+                    }
+                }
+                Write-Host "Codigo local del reporte (no enviado): $DiagnosticReportName" -ForegroundColor DarkGray
             }
 
         } catch {
             Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -Force -ErrorAction SilentlyContinue
-            Write-Warning "The text report could not be processed: $($_.Exception.Message)"
+            Write-Warning "No fue posible procesar el reporte de texto: $($_.Exception.Message)"
         }
     }
 }
