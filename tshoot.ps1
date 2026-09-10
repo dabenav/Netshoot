@@ -807,6 +807,7 @@ if ($ActiveConnectionType -eq 'Ethernet') {
                 $DiagnosticUploadHeaders = @{
                     'Authorization' = "Basic $DiagnosticBasicToken"
                     'X-PC-Name' = $DiagnosticPcName
+                    'X-File-Name' = $DiagnosticReportName
                 }
 
                 $DiagnosticUploadResponse = Invoke-RestMethod `
