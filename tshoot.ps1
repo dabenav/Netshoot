@@ -601,31 +601,13 @@ try {
         Write-Host ""
         Write-Host "Speed Test #$TestNumber...`n" -ForegroundColor DarkGray
 
-        $SpeedTestJson = & $SpeedTestPath --accept-license --format=json 2>$null
+        # Mostrar directamente el formato nativo de Ookla.
+        & $SpeedTestPath --accept-license --accept-gdpr
+        $SpeedTestExitCode = $LASTEXITCODE
 
-        if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($SpeedTestJson)) {
-            throw "Speed Test #$TestNumber did not return a valid result."
+        if ($SpeedTestExitCode -ne 0) {
+            throw "Speed Test #$TestNumber fallo con codigo $SpeedTestExitCode."
         }
-
-        $SpeedTestResult = $SpeedTestJson | ConvertFrom-Json -ErrorAction Stop
-
-        $SpeedTestObject = [PSCustomObject]@{
-            downloadspeed = [math]::Round($SpeedTestResult.download.bandwidth / 1000000 * 8, 2)
-            uploadspeed   = [math]::Round($SpeedTestResult.upload.bandwidth / 1000000 * 8, 2)
-            ISP           = $SpeedTestResult.isp
-            Location      = $SpeedTestResult.server.location
-            Country       = $SpeedTestResult.server.country
-            Jitter        = [math]::Round($SpeedTestResult.ping.jitter, 2)
-            Latency       = [math]::Round($SpeedTestResult.ping.latency, 2)
-        }
-
-        Write-Host ("The Internet Service Provider is: " + $SpeedTestObject.ISP) -ForegroundColor DarkGray
-        Write-Host ("The Speed Test Server Location is: " + $SpeedTestObject.Location) -ForegroundColor DarkGray
-        Write-Host ("The Speed Test Server Country is: " + $SpeedTestObject.Country) -ForegroundColor DarkGray
-        Write-Host ("The Download Speed is: " + $SpeedTestObject.downloadspeed + " Mbps") -ForegroundColor DarkGray
-        Write-Host ("The Upload speed is: " + $SpeedTestObject.uploadspeed + " Mbps") -ForegroundColor DarkGray
-        Write-Host ("The Latency is: " + $SpeedTestObject.latency + " ms") -ForegroundColor DarkGray
-        Write-Host ("The Jitter is: " + $SpeedTestObject.Jitter + " ms") -ForegroundColor DarkGray
     }
 }
 catch {
