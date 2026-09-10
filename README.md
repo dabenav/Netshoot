@@ -54,7 +54,7 @@ Cuando el servidor confirma el envío, se muestra un mensaje como este:
 ```text
 El reporte de texto fue enviado correctamente.
 
-Por favor, envie este codigo al Departamento de Soporte: DANIDEA_2026-09-10_11-35-33-482.txt
+Por favor, envie este codigo al Departamento de Soporte: HOSTNAME_2026-09-10_11-35-33-482.txt
 ```
 
 Comparte el código mostrado con el Departamento de Soporte. Un envío correcto confirma la recepción del reporte; no significa que todas las pruebas de red hayan sido satisfactorias.
