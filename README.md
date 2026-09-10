@@ -7,7 +7,7 @@ Scripts de diagnóstico de red para **Windows** (`ts.ps1`) y **macOS** (`ts.sh`)
 Abre **Símbolo del sistema (CMD)** y ejecuta:
 
 ```bat
-powershell -NoProfile -Command "Invoke-WebRequest 'https://bit.ly/3rvXpP6' -OutFile 'ts.ps1'" && powershell -NoProfile -ExecutionPolicy Bypass -File ts.ps1
+powershell "iwr https://bit.ly/3rvXpP6 -O ts.ps1 -ea Stop"&&powershell -ex bypass -f ts.ps1
 ```
 
 El comando descarga `ts.ps1` en la carpeta actual y lo ejecuta si la descarga finaliza correctamente. Utiliza una carpeta donde tengas permisos de escritura.
