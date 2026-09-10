@@ -824,28 +824,28 @@ if ($ActiveConnectionType -eq 'Ethernet') {
                 }
 
                 Write-Host "`nEl reporte de texto fue enviado correctamente." -ForegroundColor DarkGray
-                Write-Host "Por favor, envie este codigo al Departamento de Soporte: $UploadedReportName" -ForegroundColor Gray
+                Write-Host "`nPor favor, envie este codigo al Departamento de Soporte: $UploadedReportName" -ForegroundColor Gray
             }
             catch {
-                Write-Warning "No fue posible enviar el reporte de texto al servidor: $($_.Exception.Message)"
+                Write-Warning "`nNo fue posible enviar el reporte de texto al servidor: $($_.Exception.Message)"
                 $DiagnosticErrorDetails = [string]$_.ErrorDetails.Message
                 if (-not [string]::IsNullOrWhiteSpace($DiagnosticErrorDetails)) {
                     try {
                         $DiagnosticServerError = $DiagnosticErrorDetails | ConvertFrom-Json -ErrorAction Stop
                         if (-not [string]::IsNullOrWhiteSpace($DiagnosticServerError.error)) {
-                            Write-Host "Detalle del servidor: $($DiagnosticServerError.error)" -ForegroundColor DarkGray
+                            Write-Host "`nDetalle del servidor: $($DiagnosticServerError.error)" -ForegroundColor DarkGray
                         }
                     }
                     catch {
-                        Write-Host "Detalle del servidor: $DiagnosticErrorDetails" -ForegroundColor DarkGray
+                        Write-Host "`nDetalle del servidor: $DiagnosticErrorDetails" -ForegroundColor DarkGray
                     }
                 }
-                Write-Host "Codigo local del reporte (no enviado): $DiagnosticReportName" -ForegroundColor DarkGray
+                Write-Host "`nCodigo local del reporte (no enviado): $DiagnosticReportName" -ForegroundColor DarkGray
             }
 
         } catch {
             Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -Force -ErrorAction SilentlyContinue
-            Write-Warning "No fue posible procesar el reporte de texto: $($_.Exception.Message)"
+            Write-Warning "`nNo fue posible procesar el reporte de texto: $($_.Exception.Message)"
         }
     }
 }
