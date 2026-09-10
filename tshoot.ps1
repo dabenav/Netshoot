@@ -658,7 +658,7 @@ try {
             LogName   = 'Microsoft-Windows-WLAN-AutoConfig/Operational'
             StartTime = $WiFiLogEndTime.AddHours(-24)
             EndTime   = $WiFiLogEndTime
-        } -ErrorAction Stop |
+        } -ErrorAction SilentlyContinue |
         Sort-Object TimeCreated
     )
 
@@ -695,11 +695,12 @@ try {
             Write-Host ([regex]::Replace($WiFiDetailsText, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
         }
     }
+    else {
+        Write-Host "`nNo hubo logs de WiFi en las ultimas 24 horas." -ForegroundColor DarkGray
+    }
 }
 catch {
-    if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') {
-        Write-Warning "Could not read WiFi events: $($_.Exception.Message)"
-    }
+    Write-Warning "No fue posible consultar los logs de WiFi."
 }
 }
 if ($ActiveConnectionType -eq 'Ethernet') {
@@ -719,7 +720,7 @@ if ($ActiveConnectionType -eq 'Ethernet') {
                     LogName = $EthernetLog
                     StartTime = $EthernetLogEnd.AddHours(-24)
                     EndTime = $EthernetLogEnd
-                } -ErrorAction Stop | Where-Object {
+                } -ErrorAction SilentlyContinue | Where-Object {
                     $EthernetEvent = $_
                     $EthernetMatches = $false
                     try {
@@ -738,11 +739,7 @@ if ($ActiveConnectionType -eq 'Ethernet') {
                     } catch { }
                     $EthernetMatches
                 }
-            } catch {
-                if ($_.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') {
-                    Write-Host "Log unavailable: $EthernetLog - $($_.Exception.Message)" -ForegroundColor DarkGray
-                }
-            }
+            } catch { }
         }
     ) | Sort-Object TimeCreated
     $EthernetEvents = @($EthernetEvents)
@@ -762,6 +759,9 @@ if ($ActiveConnectionType -eq 'Ethernet') {
             $EthernetDetails = $EthernetIssues | Format-List TimeCreated, Id, ProviderName, LevelDisplayName, Message | Out-String
             Write-Host ([regex]::Replace($EthernetDetails, '\x1B\[[0-9;:]*m', '').TrimEnd()) -ForegroundColor DarkGray
         }
+    }
+    else {
+        Write-Host "`nNo hubo logs de Ethernet en las ultimas 24 horas." -ForegroundColor DarkGray
     }
 }
 
