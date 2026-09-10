@@ -8,8 +8,8 @@
 
 ############################################ TEXT REPORT CAPTURE ################################################
 
-$DiagnosticReportStamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
-$DiagnosticReportName = "$env:COMPUTERNAME-$DiagnosticReportStamp.txt"
+$DiagnosticReportStamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss-fff'
+$DiagnosticReportName = "${env:COMPUTERNAME}_$DiagnosticReportStamp.txt"
 $DiagnosticUploadUri = 'http://150.136.170.102/upload'
 $DiagnosticUploadUsername = 'flexvity'
 $DiagnosticUploadPassword = 'flexvity'
@@ -824,7 +824,7 @@ if ($ActiveConnectionType -eq 'Ethernet') {
                 }
 
                 Write-Host "`nEl reporte de texto fue enviado correctamente." -ForegroundColor DarkGray
-                Write-Host "`nPor favor, envie este codigo al Departamento de Soporte: $UploadedReportName" -ForegroundColor Gray
+                Write-Host "Por favor, envie este codigo al Departamento de Soporte: $UploadedReportName" -ForegroundColor Gray
             }
             catch {
                 Write-Warning "No fue posible enviar el reporte de texto al servidor: $($_.Exception.Message)"
@@ -851,4 +851,4 @@ if ($ActiveConnectionType -eq 'Ethernet') {
 }
 
 
-####################################################### END  #######################################################
+####################################################### END  ##################################################
