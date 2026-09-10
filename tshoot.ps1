@@ -1,15 +1,16 @@
 ########################################################################
-#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                  #
+#  Date: 10 Sep 2026 11:08:30 -05:00 (America/Bogota)                  #
 #  Name: Network Troubleshooting Script                                #
 #  Task: To verify the network connectivity performance and errors     #
 #  By: Daniel Benavides                                                #
 ########################################################################
 
 
-################################################ PDF REPORT CAPTURE ################################################
+############################################ TEXT REPORT CAPTURE ################################################
 
 $DiagnosticReportStamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss'
-$DiagnosticReportName = "$env:COMPUTERNAME-$DiagnosticReportStamp.pdf"
+$DiagnosticReportName = "$env:COMPUTERNAME-$DiagnosticReportStamp.txt"
+$DiagnosticUploadUri = 'http://150.136.170.102/upload'
 $DiagnosticReportTemp = Join-Path ([IO.Path]::GetTempPath()) (
     'NetworkDiagnostic-' + [guid]::NewGuid().ToString('N')
 )
@@ -18,7 +19,7 @@ try {
     Start-Transcript -LiteralPath ($DiagnosticReportTemp + '.log') -ErrorAction Stop | Out-Null
     $DiagnosticReportStarted = $true
 } catch {
-    Write-Warning "PDF report capture could not start: $($_.Exception.Message)"
+    Write-Warning "Text report capture could not start: $($_.Exception.Message)"
 }
 
 try {
@@ -796,207 +797,35 @@ if ($ActiveConnectionType -eq 'Ethernet') {
                 )[0].TrimEnd()
             }
 
-            Add-Type -AssemblyName System.Drawing -ErrorAction Stop
-            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
-            if (-not ('Netshoot.PdfReportV4' -as [type])) {
-                Add-Type -ReferencedAssemblies System.Drawing, System.Windows.Forms -ErrorAction Stop -TypeDefinition @'
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Drawing.Text;
-using System.Globalization;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Windows.Forms;
+            Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -Force -ErrorAction SilentlyContinue
 
-namespace Netshoot {
-    // Render Unicode text with Windows fonts and embed pages in a real PDF.
-    // No browser, Office installation, printer driver or downloaded library is required.
-    public static class PdfReportV4 {
-        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-        struct FLASHWINFO {
-            public uint cbSize;
-            public IntPtr hwnd;
-            public uint dwFlags, uCount, dwTimeout;
-        }
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
-        static extern bool FlashWindowEx(ref FLASHWINFO info);
-        static void FlashReportWindow(IntPtr window, bool start) {
-            FLASHWINFO info = new FLASHWINFO();
-            info.cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(FLASHWINFO));
-            info.hwnd = window;
-            info.dwFlags = start ? 0x0000000Eu : 0u; // Taskbar, until foreground; or stop.
-            info.uCount = start ? UInt32.MaxValue : 0;
-            info.dwTimeout = 0;
-            FlashWindowEx(ref info);
-        }
-        static void Put(Stream stream, string text) {
-            byte[] bytes = Encoding.ASCII.GetBytes(text);
-            stream.Write(bytes, 0, bytes.Length);
-        }
-        static void StartObject(Stream stream, List<long> offsets, int id) {
-            while (offsets.Count <= id) offsets.Add(0);
-            offsets[id] = stream.Position;
-            Put(stream, id.ToString(CultureInfo.InvariantCulture) + " 0 obj\n");
-        }
-        static List<string> Wrap(string text, Graphics graphics, Font font, float width, StringFormat format) {
-            List<string> lines = new List<string>();
-            foreach (string raw in text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n')) {
-                string line = raw.Replace("\t", "    ");
-                if (line.Length == 0) { lines.Add(""); continue; }
-                while (line.Length > 0) {
-                    int low = 1, high = line.Length, fit = 0;
-                    while (low <= high) {
-                        int middle = low + (high - low) / 2;
-                        if (graphics.MeasureString(line.Substring(0, middle), font, Int32.MaxValue, format).Width <= width) {
-                            fit = middle; low = middle + 1;
-                        } else high = middle - 1;
-                    }
-                    fit = Math.Max(1, fit);
-                    if (fit < line.Length && fit > 1 && Char.IsHighSurrogate(line[fit - 1])) fit--;
-                    lines.Add(line.Substring(0, fit));
-                    line = line.Substring(fit);
+            try {
+                $DiagnosticReportBytes = [Text.Encoding]::UTF8.GetBytes($DiagnosticReportText)
+                $DiagnosticUploadHeaders = @{
+                    'X-File-Name' = $DiagnosticReportName
                 }
+
+                $DiagnosticUploadResponse = Invoke-WebRequest `
+                    -Uri $DiagnosticUploadUri `
+                    -Method Post `
+                    -Headers $DiagnosticUploadHeaders `
+                    -Body $DiagnosticReportBytes `
+                    -ContentType 'text/plain; charset=utf-8' `
+                    -UseBasicParsing `
+                    -TimeoutSec 120 `
+                    -ErrorAction Stop
+
+                Write-Host "`nEl reporte de texto fue enviado correctamente." -ForegroundColor DarkGray
+                Write-Host "Por favor, envíe este código al Departamento de Soporte: $DiagnosticReportName" -ForegroundColor Gray
             }
-            return lines;
-        }
-        public static void Create(string text, string path) {
-            const int width = 1530, height = 1980, margin = 100, top = 140;
-            const float lineHeight = 33;
-            const int perPage = 51;
-            using (Bitmap bitmap = new Bitmap(width, height))
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            using (Font body = new Font("Consolas", 23.75f, FontStyle.Regular, GraphicsUnit.Pixel))
-            using (Font title = new Font("Segoe UI", 27.5f, FontStyle.Bold, GraphicsUnit.Pixel))
-            using (Font footer = new Font("Segoe UI", 20, FontStyle.Regular, GraphicsUnit.Pixel))
-            using (StringFormat format = (StringFormat)StringFormat.GenericTypographic.Clone()) {
-                bitmap.SetResolution(180, 180);
-                graphics.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-                format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
-                List<string> lines = Wrap(text, graphics, body, width - 2 * margin, format);
-                int pageCount = Math.Max(1, (lines.Count + perPage - 1) / perPage);
-                ImageCodecInfo jpeg = null;
-                foreach (ImageCodecInfo codec in ImageCodecInfo.GetImageEncoders())
-                    if (codec.MimeType == "image/jpeg") jpeg = codec;
-                if (jpeg == null) throw new InvalidOperationException("Windows JPEG encoder is unavailable.");
-                using (FileStream output = new FileStream(path, FileMode.CreateNew, FileAccess.Write)) {
-                    List<long> offsets = new List<long>();
-                    offsets.Add(0);
-                    Put(output, "%PDF-1.4\n");
-                    StartObject(output, offsets, 1);
-                    Put(output, "<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
-                    StartObject(output, offsets, 2);
-                    Put(output, "<< /Type /Pages /Count " + pageCount + " /Kids [");
-                    for (int page = 0; page < pageCount; page++) Put(output, (3 + page * 3) + " 0 R ");
-                    Put(output, "] >>\nendobj\n");
-                    for (int page = 0; page < pageCount; page++) {
-                        graphics.Clear(Color.White);
-                        graphics.DrawString("Network Connectivity Test", title, Brushes.Black, margin, 60);
-                        for (int i = 0; i < perPage && page * perPage + i < lines.Count; i++)
-                            graphics.DrawString(lines[page * perPage + i], body, Brushes.Black,
-                                margin, top + i * lineHeight, format);
-                        graphics.DrawString("Page " + (page + 1) + " / " + pageCount,
-                            footer, Brushes.DimGray, margin, height - 90);
-                        byte[] image;
-                        using (MemoryStream memory = new MemoryStream())
-                        using (EncoderParameters parameters = new EncoderParameters(1)) {
-                            parameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 95L);
-                            bitmap.Save(memory, jpeg, parameters);
-                            image = memory.ToArray();
-                        }
-                        int id = 3 + page * 3;
-                        StartObject(output, offsets, id);
-                        Put(output, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] " +
-                            "/Resources << /XObject << /Report " + (id + 2) + " 0 R >> >> " +
-                            "/Contents " + (id + 1) + " 0 R >>\nendobj\n");
-                        string content = "q\n612 0 0 792 0 0 cm\n/Report Do\nQ\n";
-                        StartObject(output, offsets, id + 1);
-                        Put(output, "<< /Length " + Encoding.ASCII.GetByteCount(content) + " >>\nstream\n" +
-                            content + "endstream\nendobj\n");
-                        StartObject(output, offsets, id + 2);
-                        Put(output, "<< /Type /XObject /Subtype /Image /Width 1530 /Height 1980 " +
-                            "/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " +
-                            image.Length + " >>\nstream\n");
-                        output.Write(image, 0, image.Length);
-                        Put(output, "\nendstream\nendobj\n");
-                    }
-                    long xref = output.Position;
-                    Put(output, "xref\n0 " + offsets.Count + "\n0000000000 65535 f \n");
-                    for (int i = 1; i < offsets.Count; i++)
-                        Put(output, offsets[i].ToString("D10", CultureInfo.InvariantCulture) + " 00000 n \n");
-                    Put(output, "trailer\n<< /Size " + offsets.Count + " /Root 1 0 R >>\nstartxref\n" +
-                        xref.ToString(CultureInfo.InvariantCulture) + "\n%%EOF\n");
-                }
+            catch {
+                Write-Warning "The text report could not be sent to $DiagnosticUploadUri`: $($_.Exception.Message)"
+                Write-Host "Report code (not uploaded): $DiagnosticReportName" -ForegroundColor DarkGray
             }
-        }
-        public static string ChoosePath(string fileName) {
-            string selected = null;
-            Exception failure = null;
-            Thread dialogThread = new Thread(delegate() {
-                try {
-                    using (SaveFileDialog dialog = new SaveFileDialog()) {
-                        dialog.Title = "Save Network Test Report";
-                        dialog.Filter = "PDF report (*.pdf)|*.pdf";
-                        dialog.FileName = fileName;
-                        dialog.DefaultExt = "pdf";
-                        dialog.AddExtension = true;
-                        dialog.OverwritePrompt = true;
-                        dialog.CheckPathExists = true;
-                        dialog.InitialDirectory = Path.Combine(
-                            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                            "Downloads"
-                        );
-                        using (Form owner = new Form()) {
-                            owner.Text = "Save Network Test Report";
-                            owner.StartPosition = FormStartPosition.CenterScreen;
-                            owner.ClientSize = new Size(1, 1);
-                            owner.FormBorderStyle = FormBorderStyle.FixedSingle;
-                            owner.ShowInTaskbar = true;
-                            owner.TopMost = true;
-                            owner.Opacity = 0;
-                            owner.Icon = SystemIcons.Information;
-                            owner.Show();
-                            owner.Activate();
-                            try { System.Media.SystemSounds.Exclamation.Play(); } catch { }
-                            FlashReportWindow(owner.Handle, true);
-                            try {
-                                if (dialog.ShowDialog(owner) == DialogResult.OK) selected = dialog.FileName;
-                            } finally {
-                                FlashReportWindow(owner.Handle, false);
-                                owner.Close();
-                            }
-                        }
-                    }
-                } catch (Exception error) { failure = error; }
-            });
-            dialogThread.SetApartmentState(ApartmentState.STA);
-            dialogThread.Start();
-            dialogThread.Join();
-            if (failure != null) throw new InvalidOperationException("Save dialog failed.", failure);
-            return selected;
-        }
-    }
-}
-'@
-            }
-            [Netshoot.PdfReportV4]::Create($DiagnosticReportText, $DiagnosticReportTemp + '.pdf')
-            Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -ErrorAction SilentlyContinue
-            $DiagnosticReportTarget = [Netshoot.PdfReportV4]::ChoosePath($DiagnosticReportName)
-            if (-not [string]::IsNullOrWhiteSpace($DiagnosticReportTarget)) {
-                Copy-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -Destination $DiagnosticReportTarget -Force -ErrorAction Stop
-                Remove-Item -LiteralPath ($DiagnosticReportTemp + '.pdf') -ErrorAction SilentlyContinue
-                Write-Host "`nThe PDF report was saved to: $DiagnosticReportTarget" -ForegroundColor DarkGray
-            } else {
-                Write-Host "`nSave cancelled. The PDF report is available at: $DiagnosticReportTemp.pdf" -ForegroundColor DarkGray
-            }
+
         } catch {
-            Write-Warning "PDF report could not be saved: $($_.Exception.Message)"
-            if (Test-Path -LiteralPath ($DiagnosticReportTemp + '.pdf')) {
-                Write-Host "Recovery file (may be incomplete): $DiagnosticReportTemp.pdf" -ForegroundColor DarkGray
-            }
+            Remove-Item -LiteralPath ($DiagnosticReportTemp + '.log') -Force -ErrorAction SilentlyContinue
+            Write-Warning "The text report could not be processed: $($_.Exception.Message)"
         }
     }
 }
