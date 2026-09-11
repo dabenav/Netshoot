@@ -1,10 +1,10 @@
 #!/bin/bash
 
 ######################################################################
-#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                #
+#  Date: 11 Sep 2026 11:08:30 -05:00 (America/Bogota)                #
 #  Name: Network Troubleshooting Script                              #
 #  Task: To verify the network connectivity performance and errors   #
-#  By: DaBenav                                                       #
+#  By: Daniel Benavides                                              #
 ######################################################################
 
 # Network diagnostics for macOS. Run with /bin/bash, without sudo.
@@ -75,15 +75,69 @@ ping_test() {
 
 collect_logs() {
     local label="$1" predicate="$2"
-    # --style ndjson permits distinguishing actual events from log headers.
-    # Do not claim that all system networking messages belong to one adapter.
+    # Keep the full 24-hour query; filter and group before printing.
     if /usr/bin/log show --last 24h --style ndjson --info --predicate "$predicate" \
         > "$work_dir/events" 2> "$work_dir/log-errors"; then
-        if grep -q '"eventMessage"' "$work_dir/events"; then
+        cat > "$work_dir/format-logs.js" <<'JAVASCRIPT'
+function formatLogs(text) {
+    var groups = Object.create(null), invalid = 0, relevant = 0;
+    // Match WiFi/Ethernet state transitions and authentication, not generic
+    // libnetwork connection objects, DNS requests or telemetry messages.
+    var transitions = /\b(disconnect(?:ed|ing|ion)?|deauth(?:entication|enticated)?|disassoc(?:iation|iated)?|reassoc(?:iation|iated)?|associated|associating|association|authentication|authenticate(?:d)?|authenticating|EAPOL|802\.1[xX]|WPA[23]?|handshake|roam(?:ing|ed)?)\b|\b(?:link|connection|network)\s+(?:is\s+)?(?:up|down|lost|established|failed|disconnected)\b|\b(?:joined|joining|connected|connecting)\s+(?:to\s+)?(?:SSID|BSSID|network|AP)\b/i;
+    text.split(/\r?\n/).forEach(function (line) {
+        if (!line.trim()) return;
+        var e;
+        try { e = JSON.parse(line); } catch (_) { invalid++; return; }
+        if (typeof e.eventMessage !== 'string') return;
+        var level = String(e.messageType || 'Unknown');
+        var message = e.eventMessage.replace(/\s+/g, ' ').trim();
+        if (!/^(error|fault)$/i.test(level) && !transitions.test(message)) return;
+        relevant++;
+        // Group identical messages at the same level, keeping source identity
+        // in the key to avoid conflating separate components.
+        var key = JSON.stringify([level, message, e.processImagePath || '', e.subsystem || '', e.category || '']);
+        var stamp = String(e.timestamp || 'Fecha no disponible');
+        if (!groups[key]) groups[key] = { first: stamp, last: stamp, level: level, message: message, count: 0 };
+        var g = groups[key];
+        g.count++;
+        if (stamp < g.first) g.first = stamp;
+        if (stamp > g.last) g.last = stamp;
+    });
+    var rows = Object.keys(groups).map(function (key) { return groups[key]; });
+    rows.sort(function (a, b) { return a.first < b.first ? -1 : a.first > b.first ? 1 : 0; });
+    var output = [];
+    if (rows.length) {
+        output.push('Fecha | Nivel | Mensaje');
+        rows.forEach(function (g) {
+            var date = g.first === g.last ? g.first : g.first + ' hasta ' + g.last;
+            output.push(date + ' | ' + g.level + ' | ' + g.message +
+                (g.count > 1 ? ' [Ocurrencias: ' + g.count + ']' : ''));
+        });
+    } else {
+        output.push('No se encontraron errores, fallos ni eventos relevantes de conexion o autenticacion en los registros consultados.');
+    }
+    if (invalid) output.push('Advertencia: ' + invalid + ' lineas no pudieron interpretarse; el resumen puede estar incompleto.');
+    return output.join('\n');
+}
+function run(args) {
+    ObjC.import('Foundation');
+    var content = $.NSString.stringWithContentsOfFileEncodingError(args[0], $.NSUTF8StringEncoding, null);
+    if (!content) throw new Error('No fue posible leer los eventos.');
+    return formatLogs(ObjC.unwrap(content));
+}
+JAVASCRIPT
+        if ! osascript -l JavaScript "$work_dir/format-logs.js" "$work_dir/events" \
+            > "$work_dir/events-summary" 2> "$work_dir/format-errors"; then
+            printf '\nNo fue posible resumir los logs de %s.\n' "$label"
+        elif grep -q '"eventMessage"' "$work_dir/events"; then
             section "$label Events - Last 24 Hours (macOS unified log)"
-            cat "$work_dir/events"
+            cat "$work_dir/events-summary"
+            printf '\n'
         else
             printf '\nNo hubo logs de %s en las ultimas 24 horas.\n' "$label"
+            if grep -q '^Advertencia:' "$work_dir/events-summary"; then
+                cat "$work_dir/events-summary"
+            fi
         fi
         if [ -s "$work_dir/log-errors" ]; then
             printf 'La consulta de logs devolvio advertencias; la cobertura puede ser parcial.\n'
