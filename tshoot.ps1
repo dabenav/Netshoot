@@ -10,7 +10,7 @@
 
 $DiagnosticReportStamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss-fff'
 $DiagnosticReportName = "${env:COMPUTERNAME}_$DiagnosticReportStamp.txt"
-$DiagnosticUploadUri = 'http://150.136.170.102/upload'
+$DiagnosticUploadUri = 'https://ts.flexvity.com/upload'
 $DiagnosticUploadUsername = 'flexvity'
 $DiagnosticUploadPassword = 'flexvity'
 $DiagnosticReportTemp = Join-Path ([IO.Path]::GetTempPath()) (
