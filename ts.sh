@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ######################################################################
-#  Date: 11 Sep 2026 11:08:30 -05:00 (America/Bogota)                #
+#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                #
 #  Name: Network Troubleshooting Script                              #
 #  Task: To verify the network connectivity performance and errors   #
 #  By: Daniel Benavides                                              #
@@ -64,10 +64,20 @@ report_name="${pc_name}_${stamp}.txt"
 
 section() { printf '\n%s\n\n' "$1"; }
 ping_test() {
-    local label="$1" target="$2"
+    local label="$1" target="$2" rc
     [ -n "$target" ] || return 0
-    printf '\nPing test to %s (%s):\n' "$label" "$target"
-    /sbin/ping -n -c 8 -W 1000 "$target"
+    case "$target" in
+        *:*) /sbin/ping6 -n -c 8 "$target" > "$work_dir/ping" 2>&1 ;;
+        *) /sbin/ping -n -c 8 -W 1000 "$target" > "$work_dir/ping" 2>&1 ;;
+    esac
+    rc=$?
+    awk -v label="$label" -v target="$target" -v rc="$rc" '
+        /packets transmitted/ { for(i=1;i<=NF;i++) if($i=="packet" && $(i+1)=="loss") loss=$(i-1) }
+        /min\/avg\/max/ { split($0,a," = "); split(a[2],v,"/"); times=sprintf("%.2f/%.2f/%.2f",v[1],v[2],v[3]) }
+        END {
+            if(loss=="") printf "Ping test to %s %s FAILED (command exit %s)\n",label,target,rc;
+            else printf "Ping test to %s %s response time Min/Avg/Max = %s ms, Packet Loss %s\n",label,target,(times=="" ? "/0/" : times),loss;
+        }' "$work_dir/ping"
 }
 
 
@@ -184,20 +194,20 @@ run_speedtest() {
 ######################################## STARTING NETWORK CONNECTIVITY TEST ########################################
 
 diagnose() {
-    local route_info iface gateway hardware_port connection_type dns server port hops hop
+    local route_info iface gateway hardware_port connection_type dns server port hop number
+    local mac state ip mask prefix method service public_ip firmware media speed duplex ipv6
     section 'Starting Network Connectivity Test...'
 
 ################################################ SYSTEM INFORMATION ################################################
 
     section 'System Information...'
-    printf 'The Date and Time is: %s\n' "$(date '+%Y-%m-%d %H:%M:%S %z')"
+    printf 'The Date and Time is: %s\n' "$(date '+%Y-%m-%d %H:%M:%S %z' | sed 's/\([+-][0-9][0-9]\)\([0-9][0-9]\)$/\1:\2/')"
     printf 'The Computer Name is: %s\n' "$pc_name"
+    printf 'The Serial Number is: %s\n' "$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F '"' '/IOPlatformSerialNumber/{print $(NF-1)}')"
     printf 'The Manufacturer is: Apple\n'
     printf 'The Model is: %s\n' "$(sysctl -n hw.model)"
+    printf 'The macOS Version is: %s %s (Build %s)\n' "$(sw_vers -productName)" "$(sw_vers -productVersion)" "$(sw_vers -buildVersion)"
     printf 'The Architecture is: %s\n' "$(uname -m)"
-    printf 'The Serial Number is: %s\n' "$(ioreg -rd1 -c IOPlatformExpertDevice | awk -F '"' '/IOPlatformSerialNumber/{print $(NF-1)}')"
-    sw_vers
-
 
 ########################################## NETWORK INTERFACE PREPARATION ###########################################
 
@@ -210,86 +220,136 @@ diagnose() {
         *Ethernet*|*LAN*) connection_type=Ethernet ;;
         *) connection_type=Network ;;
     esac
-
+    : > "$work_dir/interface"
+    if [ -n "$iface" ]; then ifconfig "$iface" > "$work_dir/interface" 2>/dev/null; fi
+    mac=$(awk '/^[ \t]*ether /{print toupper($2);exit}' "$work_dir/interface")
+    state=$(awk '/status:/{print ($2=="active" ? "Connected" : "Disconnected");exit}' "$work_dir/interface")
+    ip=$(awk '$1=="inet"{print $2;exit}' "$work_dir/interface")
+    mask=$(awk '$1=="inet"{for(i=1;i<=NF;i++) if($i=="netmask") {print $(i+1);exit}}' "$work_dir/interface")
+    prefix=''
+    if [[ "$mask" =~ ^0x[0-9a-fA-F]+$ ]]; then
+        prefix=$(awk -v mask="$mask" 'BEGIN {sub(/^0x/,"",mask); n=0; for(i=1;i<=length(mask);i++){c=tolower(substr(mask,i,1)); p=index("0123456789abcdef",c)-1; for(j=0;j<4;j++){n+=p%2;p=int(p/2)}} print n}')
+    fi
+    service=$(networksetup -listnetworkserviceorder | awk -v dev="$iface" '/^\([0-9]+\)/ {name=$0;sub(/^\([0-9]+\) /,"",name)} index($0,"Device: " dev ")") && dev!="" {print name;exit}')
+    method=Unknown
+    if [ -n "$service" ]; then
+        networksetup -getinfo "$service" > "$work_dir/service" 2>/dev/null
+        if grep -q '^DHCP Configuration' "$work_dir/service"; then method=DHCP
+        elif grep -q '^Manual Configuration' "$work_dir/service"; then method=Manual
+        elif grep -q '^BOOTP Configuration' "$work_dir/service"; then method=BOOTP
+        fi
+    fi
+    printf '\nThe %s Adapter is: %s (%s)\n' "$connection_type" "${hardware_port:-Unavailable}" "${iface:-Unavailable}"
+    if [ "$connection_type" = WiFi ]; then
+        # Restrict the text parser to the selected interface, excluding awdl0.
+        system_profiler SPAirPortDataType -detailLevel basic -timeout 30 > "$work_dir/wifi-all" 2>/dev/null
+        awk -v dev="$iface" '
+            $0 ~ "^        " dev ":$" {active=1;next}
+            active && /^        [^ ]/ {exit}
+            active {print}
+        ' "$work_dir/wifi-all" > "$work_dir/wifi"
+        firmware=$(sed -n 's/^[[:space:]]*Firmware Version: //p' "$work_dir/wifi")
+        printf 'The Firmware Version is: %s\n' "${firmware:-Unavailable}"
+    fi
 
 ########################################### WIFI / ETHERNET INFORMATION ############################################
 
     section "$connection_type Information..."
-    printf 'The default interface is: %s\n' "${iface:-Unavailable}"
-    printf 'The Hardware Port is: %s\n' "${hardware_port:-Unavailable (possibly VPN or virtual interface)}"
-    printf 'The Gateway is: %s\n' "${gateway:-Unavailable}"
-    if [ -n "$iface" ]; then
-        ifconfig "$iface"
-        printf '\nDHCP information (if available):\n'
-        ipconfig getpacket "$iface" 2>/dev/null || printf 'No disponible; puede utilizar una configuracion estatica o una interfaz virtual.\n'
-    fi
+    printf 'The adapter mac address is: %s\n' "${mac:-Unavailable}"
+    printf 'The Link State is: %s\n' "${state:-Unavailable}"
     if [ "$connection_type" = WiFi ]; then
-        printf '\nWiFi information supplied by macOS:\n'
-        system_profiler SPAirPortDataType -detailLevel basic -timeout 30 || printf 'No fue posible obtener los detalles WiFi.\n'
-        printf '\nSSID/BSSID y otros datos pueden estar ocultos por macOS.\n'
-        printf 'No hay equivalencia garantizada para tasas RX/TX y fecha del driver de Windows.\n'
+        awk '
+            /Current Network Information:/ {current=1;next}
+            current && !ssid && /^            [^ ]/ {ssid=$0;sub(/^[ \t]+/,"",ssid);sub(/:$/,"",ssid);next}
+            current && /PHY Mode:/ {phy=$0;sub(/^.*PHY Mode: /,"",phy)}
+            current && /Channel:/ {channel=$0;sub(/^.*Channel: /,"",channel)}
+            current && /Security:/ {security=$0;sub(/^.*Security: /,"",security)}
+            current && /Signal \/ Noise:/ {s=$0;sub(/^.*Signal \/ Noise: /,"",s);split(s,v," / ");signal=v[1];noise=v[2]}
+            current && /Transmit Rate:/ {rate=$0;sub(/^.*Transmit Rate: /,"",rate)}
+            current && /BSSID:/ {bssid=$0;sub(/^.*BSSID: /,"",bssid)}
+            function val(s){return s=="" ? "Unavailable" : s}
+            END {
+                gen=(phy=="802.11ax" ? "Wi-Fi 6" : phy=="802.11ac" ? "Wi-Fi 5" : phy=="802.11n" ? "Wi-Fi 4" : phy=="802.11be" ? "Wi-Fi 7" : "");
+                print "The SSID is: " val(ssid);
+                print "The BSSID is: " val(bssid);
+                print "The protocol is: " val(phy) (gen!="" ? " ( " gen " )" : "");
+                print "The Authentication is: " val(security);
+                print "The Channel is: " val(channel);
+                print "The Signal is: " val(signal);
+                print "The Noise is: " val(noise);
+                print "The Transmit Rate is: " val(rate) (rate!="" ? " Mbps" : "");
+            }' "$work_dir/wifi"
     elif [ "$connection_type" = Ethernet ]; then
-        printf 'El campo media de ifconfig muestra velocidad/duplex cuando el adaptador los expone.\n'
-        printf 'Fecha y proveedor del driver: no disponibles en el mismo formato que Windows.\n'
+        media=$(sed -n 's/^[[:space:]]*media: //p' "$work_dir/interface")
+        speed=$(printf '%s\n' "$media" | sed -nE 's/.*[^0-9]([0-9]+)base.*/\1/p')
+        duplex=Unavailable
+        case "$media" in *full-duplex*) duplex='Full duplex';; *half-duplex*) duplex='Half duplex';; esac
+        printf 'The Duplex Mode is: %s\n' "$duplex"
+        if [ -n "$speed" ]; then
+            printf 'The Link Speed is: %s Mbps\n' "$speed"
+        else
+            printf 'The Link Speed is: Unavailable\n'
+        fi
     fi
-
 
 ############################################## COLLECTING INFORMATION ##############################################
 
     section 'Collecting Information...'
-    scutil --dns
-    dns=$(scutil --dns | awk '/nameserver\[[0-9]+\]/{print $3}' | sort -u)
-    printf '\nThe Public IP Address is: '
-    dig +time=3 +tries=1 +short myip.opendns.com @208.67.222.220 A
-
+    printf 'The default interface is %s (%s)\n' "${hardware_port:-Network}" "${iface:-Unavailable}"
+    printf 'Interface %s is %s, %s, %s%s, Gateway %s\n' "${iface:-Unavailable}" "$(if [ "$state" = Connected ]; then echo UP; elif [ "$state" = Disconnected ]; then echo DOWN; else echo Unknown; fi)" "$method" "${ip:-Unavailable}" "${prefix:+/$prefix}" "${gateway:-Unavailable}"
+    ipv6=$(awk '$1=="inet6"{printf "%s%s",sep,$2;sep=", "}' "$work_dir/interface")
+    [ -z "$ipv6" ] || printf 'The IPv6 Addresses are: %s\n' "$ipv6"
+    scutil --dns > "$work_dir/dns" 2>/dev/null
+    dns=$(awk '/nameserver\[[0-9]+\]/{print $3}' "$work_dir/dns" | sort -u)
+    printf 'The DNS Servers are: %s\n' "$(printf '%s\n' "$dns" | paste -sd ',' -)"
+    # Preserve split-DNS domains without printing mDNS machinery or duplicate blocks.
+    awk '/^resolver #/{domain="";server=""} /domain[ ]*:/{domain=$3} /nameserver\[/{server=server " " $3} /^$/{if(domain!="" && server!="") print "DNS Domain: " domain " | Servers:" server;domain="";server=""} END{if(domain!="" && server!="") print "DNS Domain: " domain " | Servers:" server}' "$work_dir/dns" | sort -u
+    public_ip=$(dig +time=3 +tries=1 +short myip.opendns.com @208.67.222.220 A 2>/dev/null | awk '/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/{print;exit}')
+    printf 'The Public IP Address is: %s\n' "${public_ip:-Unavailable}"
 
 ################################################## STARTING TESTS ##################################################
 
     section 'Starting Tests...'
-
-############################################### TRACEROUTE PING TEST ###############################################
-
-    printf 'Traceroute (first 3 hops):\n'
     traceroute -n -m 3 -w 1 8.8.8.8 > "$work_dir/trace" 2>&1
-    cat "$work_dir/trace"
-    hops=$(awk '$1 ~ /^[0-9]+$/ {for(i=2;i<=NF;i++) if ($i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) print $i}' "$work_dir/trace" | sort -u)
-    for hop in $hops; do ping_test 'route hop' "$hop"; done
-    if [[ "$gateway" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then ping_test 'gateway' "$gateway"; fi
-
-###################################### DNS CONNECTIVITY AND RESOLUTION TESTS #######################################
-
-    for server in $dns; do
-        case "$server" in
-            *:*) printf '\nIPv6 DNS ping (%s):\n' "$server"; ping6 -n -c 8 "$server" ;;
-            *) ping_test 'Host DNS server' "$server" ;;
-        esac
-    done
-
-################################################ PUBLIC DNS STATUS #################################################
-
+    awk '$1 ~ /^[0-9]+$/ {ip="0.0.0.0";for(i=2;i<=NF;i++) if($i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/){ip=$i;break} print $1,ip}' "$work_dir/trace" > "$work_dir/hops"
+    while read -r number hop; do
+        if [ "$hop" = 0.0.0.0 ]; then
+            # Requested Windows-compatible placeholder; never ping 0.0.0.0.
+            printf 'Ping test to hop #%s 0.0.0.0 response time Min/Avg/Max = /0/ ms, Packet Loss 100%%\n' "$number"
+        else
+            ping_test "hop #$number" "$hop"
+        fi
+    done < "$work_dir/hops"
+    [ -s "$work_dir/hops" ] || printf 'Traceroute could not identify hops.\n'
+    if [[ "$gateway" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then ping_test Gateway "$gateway"; fi
+    for server in $dns; do ping_test 'Host DNS server' "$server"; done
     ping_test 'Public DNS server' 8.8.8.8
 
 ############################################ LOCAL DOMAIN JOINED STATUS ############################################
 
-    printf '\nActive Directory configuration:\n'
-    if ! dsconfigad -show > "$work_dir/domain" 2>/dev/null || [ ! -s "$work_dir/domain" ]; then
-        printf 'No se pudo confirmar una union a Active Directory.\n'
+    if dsconfigad -show > "$work_dir/domain" 2>/dev/null; then
+        server=$(awk -F '= ' '/Active Directory Domain/{print $2;exit}' "$work_dir/domain")
+        if [ -n "$server" ]; then ping_test 'Domain Controller' "$server"
+        else printf 'The system is not joined to an Active Directory domain\n'; fi
     else
-        cat "$work_dir/domain"
-        server=$(awk -F '= ' '/Active Directory Domain/{print $2; exit}' "$work_dir/domain")
-        ping_test 'Active Directory domain' "$server"
+        printf 'Active Directory status unavailable\n'
     fi
 
-###################################### DNS CONNECTIVITY AND RESOLUTION TESTS #######################################
+############################################### DNS RESOLUTION TEST ################################################
 
     for server in $dns; do
-        printf '\nDNS Resolver test for %s, cisco.com:\n' "$server"
-        dig +time=3 +tries=1 @"$server" cisco.com A
+        dig +time=3 +tries=1 @"$server" cisco.com A > "$work_dir/dig" 2>&1
+        awk -v server="$server" '
+            /status:/ {s=$0;sub(/^.*status: /,"",s);sub(/,.*/,"",s)}
+            $4=="A" && $1!~/^;/ {ips=ips (ips!="" ? ", " : "") $5}
+            END {if(s=="NOERROR" && ips!="") printf "DNS Resolver test for %s, cisco.com %s - OK\n",server,ips;
+                 else printf "DNS Resolver test for %s, cisco.com - FAILED (%s)\n",server,(s!="" ? s : "no response");}' "$work_dir/dig"
     done
 
 ################################### PORT TEST TO PUBLIC SITES ON PORT 80 AND 443 ###################################
 
     for port in 80 443; do
+        printf '\nTest-NetConnection - cisco.com:%s\nAttempting TCP connect\nWaiting for response\n' "$port"
         if nc -z -G 5 -w 5 cisco.com "$port" >/dev/null 2>&1; then
             printf 'Port Connectivity test for cisco.com on port %s - OK\n' "$port"
         else
@@ -304,6 +364,7 @@ diagnose() {
 ####################################### NETWORK CONNECTIVITY TESTS COMPLETED #######################################
 
     section 'Network Connectivity Tests Completed...'
+
 
 ######################################### COLLECTING WIFI / ETHERNET LOGS ##########################################
 
