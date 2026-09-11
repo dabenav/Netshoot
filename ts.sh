@@ -72,8 +72,9 @@ ping_test() {
     esac
     rc=$?
     awk -v label="$label" -v target="$target" -v rc="$rc" '
-        /packets transmitted/ { for(i=1;i<=NF;i++) if($i=="packet" && $(i+1)=="loss") loss=$(i-1) }
-        /min\/avg\/max/ { split($0,a," = "); split(a[2],v,"/"); times=sprintf("%.2f/%.2f/%.2f",v[1],v[2],v[3]) }
+        function number(n, s) {s=sprintf("%.2f",n);sub(/0+$/,"",s);sub(/[.]$/,"",s);return s}
+        /packets transmitted/ { for(i=1;i<=NF;i++) if($i=="packet" && $(i+1)=="loss") loss=number($(i-1)+0) "%" }
+        /min\/avg\/max/ { split($0,a," = "); split(a[2],v,"/"); times=number(v[1]) "/" number(v[2]) "/" number(v[3]) }
         END {
             if(loss=="") printf "Ping test to %s %s FAILED (command exit %s)\n",label,target,rc;
             else printf "Ping test to %s %s response time Min/Avg/Max = %s ms, Packet Loss %s\n",label,target,(times=="" ? "/0/" : times),loss;
@@ -142,7 +143,6 @@ JAVASCRIPT
         elif grep -q '"eventMessage"' "$work_dir/events"; then
             section "$label Events - Last 24 Hours (macOS unified log)"
             cat "$work_dir/events-summary"
-            printf '\n'
         else
             printf '\nNo hubo logs de %s en las ultimas 24 horas.\n' "$label"
             if grep -q '^Advertencia:' "$work_dir/events-summary"; then
@@ -207,7 +207,6 @@ diagnose() {
     printf 'The Manufacturer is: Apple\n'
     printf 'The Model is: %s\n' "$(sysctl -n hw.model)"
     printf 'The macOS Version is: %s %s (Build %s)\n' "$(sw_vers -productName)" "$(sw_vers -productVersion)" "$(sw_vers -buildVersion)"
-    printf 'The Architecture is: %s\n' "$(uname -m)"
 
 ########################################## NETWORK INTERFACE PREPARATION ###########################################
 
@@ -256,7 +255,6 @@ diagnose() {
 
     section "$connection_type Information..."
     printf 'The adapter mac address is: %s\n' "${mac:-Unavailable}"
-    printf 'The Link State is: %s\n' "${state:-Unavailable}"
     if [ "$connection_type" = WiFi ]; then
         awk '
             /Current Network Information:/ {current=1;next}
@@ -277,6 +275,11 @@ diagnose() {
                 print "The Channel is: " val(channel);
                 print "The Signal is: " val(signal);
                 print "The Noise is: " val(noise);
+                if (signal ~ /^-?[0-9]+([.][0-9]+)?[ ]*dBm$/ && noise ~ /^-?[0-9]+([.][0-9]+)?[ ]*dBm$/) {
+                    printf "The SNR is: %g dB\n", (signal+0)-(noise+0);
+                } else {
+                    print "The SNR is: Unavailable";
+                }
                 print "The Transmit Rate is: " val(rate) (rate!="" ? " Mbps" : "");
             }' "$work_dir/wifi"
     elif [ "$connection_type" = Ethernet ]; then
@@ -321,7 +324,6 @@ diagnose() {
         fi
     done < "$work_dir/hops"
     [ -s "$work_dir/hops" ] || printf 'Traceroute could not identify hops.\n'
-    if [[ "$gateway" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then ping_test Gateway "$gateway"; fi
     for server in $dns; do ping_test 'Host DNS server' "$server"; done
     ping_test 'Public DNS server' 8.8.8.8
 
@@ -330,7 +332,7 @@ diagnose() {
     if dsconfigad -show > "$work_dir/domain" 2>/dev/null; then
         server=$(awk -F '= ' '/Active Directory Domain/{print $2;exit}' "$work_dir/domain")
         if [ -n "$server" ]; then ping_test 'Domain Controller' "$server"
-        else printf 'The system is not joined to an Active Directory domain\n'; fi
+        else printf 'The system is not joined to a domain\n'; fi
     else
         printf 'Active Directory status unavailable\n'
     fi
@@ -349,7 +351,6 @@ diagnose() {
 ################################### PORT TEST TO PUBLIC SITES ON PORT 80 AND 443 ###################################
 
     for port in 80 443; do
-        printf '\nTest-NetConnection - cisco.com:%s\nAttempting TCP connect\nWaiting for response\n' "$port"
         if nc -z -G 5 -w 5 cisco.com "$port" >/dev/null 2>&1; then
             printf 'Port Connectivity test for cisco.com on port %s - OK\n' "$port"
         else
@@ -412,7 +413,7 @@ fi
 
 if [ "$uploaded_name" = "$report_name" ]; then
     printf '\nEl reporte de texto fue enviado correctamente.\n'
-    printf '\nPor favor, envie este codigo al Departamento de Soporte: %s\n' "$report_name"
+    printf '\nPor favor, envie este codigo al Departamento de Soporte: %s\n\n' "$report_name"
 else
     printf '\nNo fue posible confirmar el envio del reporte de texto.\n'
     printf 'Codigo local del reporte (envio no confirmado): %s\n' "$report_name"
