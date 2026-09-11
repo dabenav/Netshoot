@@ -398,7 +398,7 @@ fi
 ############################################### SENDING TEXT REPORT ################################################
 
 http_code=$(curl -sS --connect-timeout 15 --max-time 120 \
-    --user 'flexvity:flexvity' \
+    -H 'Authorization: Basic RmxleHZpdHlUUzo4UW9HcCR0VHJ0ZTZjUSRp' \
     -H 'Content-Type: text/plain; charset=utf-8' \
     -H "X-PC-Name: $pc_name" -H "X-File-Name: $report_name" \
     --data-binary "@$report" -o "$work_dir/response.json" -w '%{http_code}' \
