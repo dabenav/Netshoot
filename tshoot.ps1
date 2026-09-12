@@ -12,7 +12,7 @@ $DiagnosticReportStamp = Get-Date -Format 'yyyy-MM-dd_HH-mm-ss-fff'
 $DiagnosticReportName = "${env:COMPUTERNAME}_$DiagnosticReportStamp.txt"
 $DiagnosticUploadUri = 'https://ts.flexvity.com/upload'
 $DiagnosticUploadUsername = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('RmxleHZpdHRT'))
-$DiagnosticUploadPassword = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('OFFvR3EkdFRydGU2Y1EkLQ=='))
+$DiagnosticUploadPassword = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('OFFvR3EkdFRydGU2Y1EkaQ=='))
 $DiagnosticReportTemp = Join-Path ([IO.Path]::GetTempPath()) (
     'NetworkDiagnostic-' + [guid]::NewGuid().ToString('N')
 )
