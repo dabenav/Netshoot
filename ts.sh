@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ######################################################################
-#  Date: 09 Sep 2026 11:08:30 -05:00 (America/Bogota)                #
+#  Date: 11 Sep 2026 19:53:00 -05:00 (America/Bogota)                #
 #  Name: Network Troubleshooting Script                              #
 #  Task: To verify the network connectivity performance and errors   #
 #  By: Dabenav                                             #
@@ -58,6 +58,64 @@ if [ -z "$stamp" ]; then
     exit 1
 fi
 report_name="${pc_name}_${stamp}.txt"
+report_sent=0
+stopped_by_signal=0
+
+send_report() {
+    local http_code curl_status uploaded_name
+    if [ "$report_sent" -ne 0 ]; then
+        return 0
+    fi
+    report_sent=1
+    # A second Ctrl+C must not abort the upload.
+    trap '' INT TERM HUP
+
+    if [ ! -s "$report" ]; then
+        printf '\nNo fue posible capturar el reporte de texto.\n' >&2
+        return 1
+    fi
+
+    if [ "$stopped_by_signal" -ne 0 ]; then
+        printf '\nDiagnostic stopped: interrupted.\n' | tee -a "$report"
+    fi
+
+    http_code=$(curl -sS --connect-timeout 15 --max-time 120 \
+        -H 'Authorization: Basic '"$(printf '%s' 'FlexvityTS:8QoGq$tTrte6cQ$i' | base64)" \
+        -H 'Content-Type: text/plain; charset=utf-8' \
+        -H "X-PC-Name: $pc_name" -H "X-File-Name: $report_name" \
+        --data-binary "@$report" -o "$work_dir/response.json" -w '%{http_code}' \
+        "$upload_uri" 2> "$work_dir/upload-error")
+    curl_status=$?
+    uploaded_name=''
+    if [ "$curl_status" -eq 0 ] && [[ "$http_code" == 2[0-9][0-9] ]]; then
+        uploaded_name=$(osascript -l JavaScript -e 'ObjC.import("Foundation"); function run(a){var s=$.NSString.stringWithContentsOfFileEncodingError(a[0],$.NSUTF8StringEncoding,null); var j=JSON.parse(ObjC.unwrap(s)); return typeof j.archivo === "string" ? j.archivo : "";}' "$work_dir/response.json" 2>/dev/null)
+    fi
+
+    if [ "$uploaded_name" = "$report_name" ]; then
+        printf '\nEl reporte de texto fue enviado correctamente.\n'
+        printf '\nPor favor, envie este codigo al Departamento de Soporte: %s\n\n' "$report_name"
+        return 0
+    fi
+    printf '\nNo fue posible confirmar el envio del reporte de texto.\n'
+    printf 'Codigo local del reporte (envio no confirmado): %s\n' "$report_name"
+    return 1
+}
+
+cleanup() {
+    # Upload first (including on Ctrl+C), then remove temp files and this script.
+    send_report
+    send_status=$?
+    if [ -n "$work_dir" ] && [ -d "$work_dir" ]; then
+        rm -rf -- "$work_dir"
+    fi
+    if [ -n "$script_path" ]; then rm -f -- "$script_path"; fi
+    if [ "$send_status" -ne 0 ]; then
+        exit 1
+    fi
+}
+trap cleanup EXIT
+trap 'stopped_by_signal=1; exit 130' INT
+trap 'stopped_by_signal=1; exit 143' TERM HUP
 
 
 ############################################ OUTPUT AND PING FUNCTIONS #############################################
@@ -386,39 +444,9 @@ diagnose() {
 
 ################################################## SAVING OUTPUT ###################################################
 
-# Synchronous pipeline: tee finishes before curl reads the report.
-# Both stdout and stderr are captured. No upload configuration is printed.
+# Capture until the script exits. Upload runs in cleanup so Ctrl+C still
+# sends whatever was written. Both stdout and stderr are captured.
+
 diagnose 2>&1 | tee "$report"
-pipeline_status=("${PIPESTATUS[@]}")
-if [ "${pipeline_status[1]}" -ne 0 ] || [ ! -s "$report" ]; then
-    printf '\nNo fue posible capturar el reporte de texto.\n' >&2
-    exit 1
-fi
-
-############################################### SENDING TEXT REPORT ################################################
-
-http_code=$(curl -sS --connect-timeout 15 --max-time 120 \
-    -H 'Authorization: Basic '"$(printf '%s' 'FlexvityTS:8QoGq$tTrte6cQ$i' | base64)" \
-    -H 'Content-Type: text/plain; charset=utf-8' \
-    -H "X-PC-Name: $pc_name" -H "X-File-Name: $report_name" \
-    --data-binary "@$report" -o "$work_dir/response.json" -w '%{http_code}' \
-    "$upload_uri" 2> "$work_dir/upload-error")
-curl_status=$?
-uploaded_name=''
-if [ "$curl_status" -eq 0 ] && [[ "$http_code" == 2[0-9][0-9] ]]; then
-    uploaded_name=$(osascript -l JavaScript -e 'ObjC.import("Foundation"); function run(a){var s=$.NSString.stringWithContentsOfFileEncodingError(a[0],$.NSUTF8StringEncoding,null); var j=JSON.parse(ObjC.unwrap(s)); return typeof j.archivo === "string" ? j.archivo : "";}' "$work_dir/response.json" 2>/dev/null)
-fi
-
-################################################## FINAL MESSAGE ###################################################
-
-if [ "$uploaded_name" = "$report_name" ]; then
-    printf '\nEl reporte de texto fue enviado correctamente.\n'
-    printf '\nPor favor, envie este codigo al Departamento de Soporte: %s\n\n' "$report_name"
-else
-    printf '\nNo fue posible confirmar el envio del reporte de texto.\n'
-    printf 'Codigo local del reporte (envio no confirmado): %s\n' "$report_name"
-    exit 1
-fi
-
 
 ####################################################### END ########################################################
