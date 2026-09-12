@@ -46,7 +46,7 @@ trap 'exit 143' TERM HUP
 
 ############################################ TEXT REPORT CONFIGURATION #############################################
 
-upload_uri='http://150.136.170.102/upload'
+upload_uri='https://ts.flexvity.com/upload'
 report="$work_dir/report.txt"
 pc_name=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
 pc_name=$(printf '%s' "$pc_name" | tr -c 'A-Za-z0-9_-' '_' | cut -c1-64)
