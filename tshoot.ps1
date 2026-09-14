@@ -163,7 +163,7 @@ $InterfacesUp = @($IPDetails.InterfaceAlias)
 $Geteway = $IPDetails.IPv4DefaultGateway.NextHop
 $DNSServers = $IPDetails.DNSServer | Where-Object {$_.AddressFamily -eq '2'}
 $DNSs = $DNSServers.ServerAddresses
-$domain = (Get-WmiObject win32_computersystem).Domain
+$domain = (Get-CimInstance -ClassName Win32_ComputerSystem).Domain
 $PublicIPAddress =  $(Resolve-DnsName -Name myip.opendns.com -Server 208.67.222.220).IPAddress
 
 
@@ -401,14 +401,14 @@ Write-Host "The Public IP Address is: $PublicIPAddress" -ForegroundColor DarkGra
 
 ### PRINT CPU USAGE
 
-$cpuAverage = (Get-WmiObject -Class win32_processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average | Select-Object Average).Average
+$cpuAverage = (Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop | Measure-Object -Property LoadPercentage -Average | Select-Object Average).Average
 
 Write-Host "The CPU Average is: $cpuAverage" -ForegroundColor DarkGray
 
 
 ### PRINT RAM USAGE 
 
-$CompObject =  Get-WmiObject -Class WIN32_OperatingSystem
+$CompObject = Get-CimInstance -ClassName Win32_OperatingSystem
 $RAM = [math]::Round((($CompObject.TotalVisibleMemorySize - $CompObject.FreePhysicalMemory)/1024/1024),2)
 
 Write-Host "The RAM usage is: $RAM GB" -ForegroundColor DarkGray
