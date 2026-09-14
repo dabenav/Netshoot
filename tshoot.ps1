@@ -537,7 +537,7 @@ foreach ($DNS in $DNSs)
     foreach ($item in $PublicSites)
     {
         $ItemIP = Resolve-DnsName $item -Server $DNS -ErrorAction SilentlyContinue
-        $firstArecord = $ItemIP.IPAddress[1]
+        $firstArecord = @($ItemIP.IPAddress)[0]
    
         if (![string]::IsNullOrWhiteSpace($ItemIP))
         {
