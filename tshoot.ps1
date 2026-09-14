@@ -593,6 +593,16 @@ try {
         throw "The Speedtest executable was not downloaded."
     }
 
+    # SHA-256 del speedtest.exe del paquete oficial Ookla 1.2.0 Windows x64.
+    $ExpectedSha256 = "C73C4AC2A7CDC48829FE0F9D7EC91CA41C8B434490D4EB3205AAD69C7AA3B921"
+
+    $ActualSha256 = (Get-FileHash -LiteralPath $SpeedTestPath `
+        -Algorithm SHA256 -ErrorAction Stop).Hash
+
+    if ($ActualSha256 -ine $ExpectedSha256) {
+        throw "Speedtest SHA-256 mismatch. Execution blocked."
+    }
+
     for ($TestNumber = 1; $TestNumber -le 2; $TestNumber++) {
         if ($TestNumber -eq 2) {
             Start-Sleep -Seconds 3
